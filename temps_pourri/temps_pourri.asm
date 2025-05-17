@@ -1,0 +1,349 @@
+GPU_CMD     EQU $F000
+GPU_DX      EQU $F005
+GPU_DY      EQU $F007
+GPU_X_MSB   EQU $F008
+GPU_X_LSB   EQU $F009
+GPU_Y_MSB   EQU $F00A
+GPU_Y_LSB   EQU $F00B
+GPU_COLOR   EQU $F010
+
+MAZE_NB_LINES   EQU 48
+PLAYER_POS  EQU $5800
+ENEMY_POS   EQU $5802
+MISSILE_POS1   EQU $5804
+MISSILE_POS2   EQU $5806
+MISSILE_POS3   EQU $5808
+MISSILE_POS4   EQU $580A
+MISSILE_POS5   EQU $580C
+
+    ORG $0000
+    SETDP $F0
+
+    LDA #$F0
+    EXG A,DP
+
+WAIT_VIDEO_CHIP
+    LDA GPU_CMD
+    ANDA #4
+    BEQ WAIT_VIDEO_CHIP
+
+    CLR GPU_COLOR
+
+WAIT_VIDEO_CHIP2
+    LDA GPU_CMD
+    ANDA #4
+    BEQ WAIT_VIDEO_CHIP2
+
+****************************
+* INIT
+****************************
+    LDY #0
+    STY PLAYER_POS
+*    LDY #MAZE_NB_LINES
+    STY ENEMY_POS
+    LDY #50
+    STY MISSILE_POS1
+    LDY #160
+    STY MISSILE_POS2
+    LDY #300
+    STY MISSILE_POS3
+    LDY #490
+    STY MISSILE_POS4
+    LDY #710
+    STY MISSILE_POS5
+
+****************************
+* MAIN LOOP
+****************************
+MAIN_LOOP
+    JSR VBLANK
+    JSR CLEAR_SCREEN
+
+    LDX #MAZE_NB_LINES
+LINE_LOOP
+    LEAX -1,X
+    JSR DRAW_LINE
+    CMPX #0
+    BNE LINE_LOOP
+****************** DRAW ENEMY
+    LDY ENEMY_POS           * Draw enemy
+    JSR DRAW_ENEMY_LINE
+    LEAY 1,Y
+    JSR DRAW_ENEMY_LINE
+    CMPY #1599                * If enemy ptr is 73
+    BEQ RESET_ENEMY
+    LEAY 1,Y
+    STY ENEMY_POS
+    BRA DRAW_MISSILE
+RESET_ENEMY
+    LDY #0
+    STY ENEMY_POS
+
+DRAW_MISSILE
+****************** DRAW MISSILE
+    LDY MISSILE_POS1           * Draw enemy
+    JSR DRAW_MISSILE_LINE
+    LEAY 1,Y
+    JSR DRAW_MISSILE_LINE
+    CMPY #1599                * If enemy ptr is 73
+    BEQ RESET_MISSILE1
+    LEAY 1,Y
+    STY MISSILE_POS1
+    BRA DRAW_MISSILE2
+RESET_MISSILE1
+    LDY #0
+    STY MISSILE_POS1
+
+DRAW_MISSILE2
+    LDY MISSILE_POS2           * Draw enemy
+    JSR DRAW_MISSILE_LINE
+    LEAY 1,Y
+    JSR DRAW_MISSILE_LINE
+    CMPY #1599                * If enemy ptr is 73
+    BEQ RESET_MISSILE2
+    LEAY 1,Y
+    STY MISSILE_POS2
+    BRA DRAW_MISSILE3
+RESET_MISSILE2
+    LDY #0
+    STY MISSILE_POS2
+
+DRAW_MISSILE3
+    LDY MISSILE_POS3           * Draw enemy
+    JSR DRAW_MISSILE_LINE
+    LEAY 1,Y
+    JSR DRAW_MISSILE_LINE
+    CMPY #1599                * If enemy ptr is 73
+    BEQ RESET_MISSILE3
+    LEAY 1,Y
+    STY MISSILE_POS3
+    BRA DRAW_MISSILE4
+RESET_MISSILE3
+    LDY #0
+    STY MISSILE_POS3
+
+DRAW_MISSILE4
+    LDY MISSILE_POS4           * Draw enemy
+    JSR DRAW_MISSILE_LINE
+    LEAY 1,Y
+    JSR DRAW_MISSILE_LINE
+    CMPY #1599                * If enemy ptr is 73
+    BEQ RESET_MISSILE4
+    LEAY 1,Y
+    STY MISSILE_POS4
+    BRA DRAW_MISSILE5
+RESET_MISSILE4
+    LDY #0
+    STY MISSILE_POS4
+
+DRAW_MISSILE5
+    LDY MISSILE_POS5           * Draw enemy
+    JSR DRAW_MISSILE_LINE
+    LEAY 1,Y
+    JSR DRAW_MISSILE_LINE
+    CMPY #1599                * If enemy ptr is 73
+    BEQ RESET_MISSILE5
+    LEAY 1,Y
+    STY MISSILE_POS5
+    BRA CHECK_KEYBOARD
+RESET_MISSILE5
+    LDY #0
+    STY MISSILE_POS5
+
+****************************
+
+CHECK_KEYBOARD
+    LDA $F046
+    CMPA #$FF
+    LBEQ MAIN_LOOP
+    LDY PLAYER_POS
+
+    CMPA #$FE
+    LBEQ KEYBOARD_UP
+    CMPA #$7F
+    LBEQ KEYBOARD_DOWN
+    CMPA #$DF
+    LBEQ KEYBOARD_LEFT
+    CMPA #$BF
+    LBEQ KEYBOARD_RIGHT
+    JMP MAIN_LOOP
+
+****************************
+* END OF MAIN LOOP
+****************************
+
+KEYBOARD_RIGHT
+    CMPY #45
+    BEQ RIGHT_RESET
+    LDA #6
+    STA LINE_COLOR,Y
+    STA LINE_COLOR+1,Y
+    STA LINE_COLOR+2,Y
+    LDA #1
+    STA LINE_COLOR+4,Y
+    STA LINE_COLOR+5,Y
+    CMPY #42
+    BEQ KEYBOARD_RIGHT_DRAW_FIRST_VECTOR
+    STA LINE_COLOR+6,Y
+    BRA MOVE_PLAYER_RIGHT
+KEYBOARD_RIGHT_DRAW_FIRST_VECTOR
+    STA LINE_COLOR-42,Y
+MOVE_PLAYER_RIGHT
+    LEAY 3,Y
+    STY PLAYER_POS
+    JMP MAIN_LOOP
+RIGHT_RESET
+    LDA #6
+    STA LINE_COLOR,Y
+    STA LINE_COLOR+1,Y
+    STA LINE_COLOR+2,Y
+    LDY #0
+    STY PLAYER_POS
+    LDA #1
+    STA LINE_COLOR+1,Y
+    STA LINE_COLOR+2,Y
+    STA LINE_COLOR+3,Y
+    JMP MAIN_LOOP
+
+KEYBOARD_LEFT
+    CMPY #0
+    BEQ LEFT_RESET
+    LDA #6
+    STA LINE_COLOR+1,Y
+    STA LINE_COLOR+2,Y
+    CMPY #45
+    BEQ KEYBOARD_LEFT_ERASE_FIRST_VECTOR
+    STA LINE_COLOR+3,Y
+    BRA MOVE_PLAYER_LEFT
+KEYBOARD_LEFT_ERASE_FIRST_VECTOR
+    STA LINE_COLOR
+MOVE_PLAYER_LEFT
+    LDA #1
+    STA LINE_COLOR-1,Y
+    STA LINE_COLOR-2,Y
+    STA LINE_COLOR-3,Y
+    LEAY -3,Y
+    STY PLAYER_POS
+    JMP MAIN_LOOP
+LEFT_RESET
+    LDA #6
+    STA LINE_COLOR+1,Y
+    STA LINE_COLOR+2,Y
+    STA LINE_COLOR+3,Y
+    LDY #45
+    STY PLAYER_POS
+    LDA #1
+    STA LINE_COLOR,Y
+    STA LINE_COLOR+1,Y
+    STA LINE_COLOR+2,Y
+    JMP MAIN_LOOP
+
+KEYBOARD_UP
+    JMP MAIN_LOOP
+KEYBOARD_DOWN
+    JMP MAIN_LOOP
+
+END_PRG
+    BRA END_PRG
+
+********************************************************************************
+
+CLEAR_SCREEN
+WAIT_VIDEO_CHIP_CS                  * WAIT_EF9365_READY();
+    LDA GPU_CMD
+    ANDA #4
+    BEQ WAIT_VIDEO_CHIP_CS
+
+    LDB #$4
+    LDX #GPU_CMD
+	STB ,X
+    RTS
+
+********************************************************************************
+
+VBLANK
+WAIT_FOR_VSYNC
+    LDA GPU_CMD
+    ANDA #$02
+    BEQ WAIT_FOR_VSYNC
+WAIT_FOR_VBLANK
+    LDA GPU_CMD
+    ANDA #$02
+    BNE WAIT_FOR_VBLANK
+    RTS
+
+********************************************************************************
+
+DRAW_LINE
+WAIT_VIDEO_CHIP_DL                  * WAIT_EF9365_READY();
+*    LDA GPU_CMD
+*    ANDA #4
+*    BEQ WAIT_VIDEO_CHIP_DL
+
+    LDA LINE_X1,X
+    STA GPU_X_LSB   * X = X_START
+    CLR GPU_X_MSB   * ? = 0
+    CLR GPU_Y_MSB   * ? = 0
+    LDA LINE_Y1,X
+    STA GPU_Y_LSB   * Y = B
+    LDA LINE_DX,X
+    STA GPU_DX   * dX
+    LDA LINE_COLOR,X
+    STA GPU_COLOR   * color
+    LDA LINE_DY,X
+    STA GPU_DY   * dY
+    LDA LINE_CMD,X
+    STA GPU_CMD   * CMD = draw_line
+    RTS
+
+********************************************************************************
+
+DRAW_ENEMY_LINE
+*WAIT_VIDEO_CHIP_DEL                  * WAIT_EF9365_READY();
+*    LDA GPU_CMD
+*    ANDA #4
+*    BEQ WAIT_VIDEO_CHIP_DEL
+
+    LDA LINE_ENEMY_X1,Y
+    STA GPU_X_LSB   * X = X_START
+    CLR GPU_X_MSB   * ? = 0
+    CLR GPU_Y_MSB   * ? = 0
+    LDA LINE_ENEMY_Y1,Y
+    STA GPU_Y_LSB   * Y = B
+    LDA LINE_ENEMY_DX,Y
+    STA GPU_DX   * dX
+    LDA #3
+    STA GPU_COLOR   * color
+    LDA LINE_ENEMY_DY,Y
+    STA GPU_DY   * dY
+    LDA LINE_ENEMY_CMD,Y
+    STA GPU_CMD   * CMD = draw_line
+    RTS
+
+********************************************************************************
+
+DRAW_MISSILE_LINE
+*WAIT_VIDEO_CHIP_DEL                  * WAIT_EF9365_READY();
+*    LDA GPU_CMD
+*    ANDA #4
+*    BEQ WAIT_VIDEO_CHIP_DEL
+
+    LDA LINE_MISSILE_X1,Y
+    STA GPU_X_LSB   * X = X_START
+    CLR GPU_X_MSB   * ? = 0
+    CLR GPU_Y_MSB   * ? = 0
+    LDA LINE_MISSILE_Y1,Y
+    STA GPU_Y_LSB   * Y = B
+    LDA LINE_MISSILE_DX,Y
+    STA GPU_DX   * dX
+    LDA #5
+    STA GPU_COLOR   * color
+    LDA LINE_MISSILE_DY,Y
+    STA GPU_DY   * dY
+    LDA LINE_MISSILE_CMD,Y
+    STA GPU_CMD   * CMD = draw_line
+    RTS
+
+********************************************************************************
+
+    INCLUD "temps_pourri/temps_pourri_vectors.asm"
