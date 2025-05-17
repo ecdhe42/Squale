@@ -1,0 +1,90 @@
+<html>
+<head>
+<title>bootloader.asm</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="6809 code">
+<meta name="description" content="6809 compiled program">
+<style type=text/css>
+body { background-color: #ffffff; padding-right: 15px; padding-left: 15px; padding-top: 15px; padding-bottom: 15px; }
+td { font-family: Verdana,Geneva,Arial,Helvetica,sans-serif; font-size: 100%; font-weight: normal; font-style: normal; text-align: left; text-decoration: none; color: #202020; background-color: #ffffff }
+a { text-decoration: none; }
+span.inst { color: #409000; font-weight: bold; }
+span.green { color: #409000; }
+span.dirc { color: #915b05; font-weight: bold; }
+span.maroon { color: #915b05; }
+span.val { color: #d040a0; }
+span.comment { color: #2050b0; }
+span.bgrey { color: #808080; font-weight: bold; }
+span.grey { color: #808080; }
+span.bold { font-weight: bold; }
+span.bred { color: #9a2020; font-weight: bold; }
+span.red { color: #9a2020; }
+span.bblue { color: #2050b0; font-weight: bold; }
+span.blue { color: #2050b0; }
+span.borange { color: #e08020; font-weight: bold; }
+span.error { background-color: #9a2020; color: #ffffff; font-weight: bold; }
+a.href { color: #202020; font-weight: normal; }
+a.href:hover { text-decoration: underline; }
+a.macro_href { color: #e08020; font-weight: bold; }
+a.macro_href:hover { text-decoration: underline; }
+a.symbol_label { color: #202020; font-weight: bold; }
+a.symbol_label:hover { text-decoration: underline; }
+a.symbol_equ { color: #2050b0; font-weight: bold; }
+a.symbol_equ:hover { text-decoration: underline; }
+a.symbol_set { color: #409000; font-weight: bold; }
+a.symbol_set:hover { text-decoration: underline; }
+a.symbol_macro { color: #915b05; font-weight: bold; }
+a.symbol_macro:hover { text-decoration: underline; }
+</style>
+</head>
+
+<body>
+<table width="100%" height="0" border="0" cellpadding="0" cellspacing="0">
+<tr>
+<td width="100%" height="0">
+<pre>
+<span class="bblue">Pass1</span>
+<span class="bblue">Pass2</span>
+      1        C100                        <span class="dirc">ORG</span> <span class="val">$C100</span>
+      2
+      3                        <span class="bgrey">F048</span>    <a name="2">PIAROM</a> <span class="dirc">EQU</span> <span class="val">$F048</span>
+      4                        <span class="bgrey">8000</span>    <a name="3">END_ADR</a> <span class="dirc">EQU</span> <span class="val">$8000</span>
+      5                        <span class="bgrey">0000</span>    <a name="4">BASE_ADR</a> <span class="dirc">EQU</span> <span class="val">$0000</span>
+      6                        <span class="bgrey">0326</span>    <a name="5">BITMAP3</a> <span class="dirc">EQU</span> <span class="val">$0326</span>
+      7                        <span class="bgrey">0319</span>    <a name="6">LINE_COUNTER2</a> <span class="dirc">EQU</span> <span class="val">$0319</span>
+      8                        <span class="bgrey">000E</span>    <a name="7">COLOR_BG</a>    <span class="dirc">EQU</span> <span class="val">$E</span>
+      9
+     10                        <span class="bgrey">0800</span>    <a name="9">NB_LINES</a>    <span class="dirc">EQU</span> <span class="val">$800</span>
+     11                        <span class="bgrey">0801</span>    <a name="10">NB_VECTORS</a>  <span class="dirc">EQU</span> <span class="val">$801</span>
+     12                        <span class="bgrey">0802</span>    <a name="11">SCAN_LINE</a>   <span class="dirc">EQU</span> <span class="val">$802</span>
+     13                        <span class="bgrey">0803</span>    <a name="12">COLOR</a>       <span class="dirc">EQU</span> <span class="val">$803</span>
+     14                        <span class="bgrey">0804</span>    <a name="13">CNT</a>         <span class="dirc">EQU</span> <span class="val">$804</span>
+     15                        <span class="bgrey">0805</span>    <a name="14">REG0</a>        <span class="dirc">EQU</span> <span class="val">$805</span>
+     16                        <span class="bgrey">0806</span>    <a name="15">REG1</a>        <span class="dirc">EQU</span> <span class="val">$806</span>
+     17                        <span class="bgrey">0807</span>    <a name="16">TOP_LINE</a>    <span class="dirc">EQU</span> <span class="val">$807</span>
+     18                        <span class="bgrey">0808</span>    <a name="17">LINE_COUNTER</a> <span class="dirc">EQU</span> <span class="val">$808</span>
+     19                        <span class="bgrey">0809</span>    <a name="18">DX</a>          <span class="dirc">EQU</span> <span class="val">$809</span>
+     20                        <span class="bgrey">080A</span>    <a name="19">X_START</a>     <span class="dirc">EQU</span> <span class="val">$80A</span>
+     21                        <span class="bgrey">080B</span>    <a name="20">CMD</a>         <span class="dirc">EQU</span> <span class="val">$80B</span>
+     22                        <span class="bgrey">1000</span>    <a name="21">BITMAP</a>      <span class="dirc">EQU</span> <span class="val">$1000</span>
+     23
+     24        C100                    <a name="23">STARTLOADER</a>
+     25  3     C100  <span class="bgrey">  CE F048</span>             <span class="inst">ldu</span> #<a href="#2" class="href">PIAROM</a>
+     26  3     C103  <span class="bgrey">  8E 0000</span>             <span class="inst">ldx</span> #<a href="#4" class="href">BASE_ADR</a>
+     27        C106                    <a name="26">LOOPCPY</a>
+     28  4+0   C106  <span class="bgrey">  A6 C4</span>               <span class="inst">lda</span> ,U
+     29                                <span class="comment">*</span>    <span class="comment">cmpa #$C2               * Relocate any $C2xx pointer to $00xx</span>
+     30                                <span class="comment">*</span>    <span class="comment">bne STRAIGHTCOPY</span>
+     31                                <span class="comment">*</span>    <span class="comment">lda #$00</span>
+     32                                <span class="comment">*STRAIGHTCOPY</span>
+     33  4+2   C108  <span class="bgrey">  A7 80</span>               <span class="inst">sta</span> ,X+
+     34  4     C10A  <span class="bgrey">  8C 8000</span>             <span class="inst">cmpx</span> #<a href="#3" class="href">END_ADR</a>
+     35  3     C10D  <span class="bgrey">  26 F7</span>               <span class="inst">bne</span> <a href="#26" class="href">LOOPCPY</a>
+     36
+     37  4     C10F  <span class="bgrey">  7E 0000</span>             <span class="inst">jmp</span> &gt;<span class="val">$0000</span>
+</pre>
+</td>
+</tr>
+</table>
+</body>
+</html>

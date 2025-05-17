@@ -1,0 +1,320 @@
+Pass1
+Pass2
+      1                        0319    LINE_COUNTER2 EQU $0319
+      2                        000E    COLOR_BG    EQU $E
+      3                        0030    MAZE_NB_LINES   EQU 48
+      4
+      5                        0800    NB_LINES    EQU $800
+      6                        0801    NB_VECTORS  EQU $801
+      7                        0802    SCAN_LINE   EQU $802
+      8                        0803    COLOR       EQU $803
+      9                        0804    CNT         EQU $804
+     10                        0805    SIZE        EQU $805
+     11                        0806    REG1        EQU $806
+     12                        0807    TOP_LINE    EQU $807
+     13                        0808    LINE_COUNTER EQU $808
+     14                        0809    PLAYER_POS  EQU $809
+     15
+     16        0000                        ORG $0000
+     17
+     18        0000                    WAIT_VIDEO_CHIP
+     19  5     0000    B6 F000             LDA $F000
+     20  2     0003    84 04               ANDA #4
+     21  3     0005    27 F9               BEQ WAIT_VIDEO_CHIP
+     22
+     23  7     0007    7F F010             CLR $F010
+     24
+     25        000A                    WAIT_VIDEO_CHIP2
+     26  5     000A    B6 F000             LDA $F000
+     27  2     000D    84 04               ANDA #4
+     28  3     000F    27 F9               BEQ WAIT_VIDEO_CHIP2
+     29
+     30  4     0011  108E 0000             LDY #0
+     31
+     32        0015                    MAIN_LOOP
+     33  8     0015    BD 0121             JSR VBLANK
+     34  8     0018    BD 0112             JSR CLEAR_SCREEN
+     35
+     36  3     001B    8E 0030             LDX #MAZE_NB_LINES
+     37        001E                    LINE_LOOP
+     38  4+1   001E    30 1F               LEAX -1,X
+     39  8     0020    BD 0130             JSR DRAW_LINE
+     40  4     0023    8C 0000             CMPX #0
+     41  3     0026    26 F6               BNE LINE_LOOP
+     42
+     43        0028                    CHECK_KEYBOARD
+     44  5     0028    B6 F046             LDA $F046
+     45  2     002B    81 FF               CMPA #$FF
+     46  3     002D    27 E6               BEQ MAIN_LOOP
+     47
+     48  2     002F    81 FE               CMPA #$FE
+     49  6     0031  1027 00BB             LBEQ KEYBOARD_UP
+     50  2     0035    81 7F               CMPA #$7F
+     51  6     0037  1027 00C5             LBEQ KEYBOARD_DOWN
+     52  2     003B    81 DF               CMPA #$DF
+     53  6     003D  1027 005C             LBEQ KEYBOARD_LEFT
+     54  2     0041    81 BF               CMPA #$BF
+     55  6     0043  1027 0002             LBEQ KEYBOARD_RIGHT
+     56  3     0047    20 CC               BRA MAIN_LOOP
+     57
+     58        0049                    KEYBOARD_RIGHT
+     59  5     0049  108C 002D             CMPY #45
+     60  3     004D    27 2C               BEQ RIGHT_RESET
+     61  2     004F    86 06               LDA #6
+     62  4+4   0051    A7 A9 02C6          STA LINE_COLOR,Y
+     63  4+4   0055    A7 A9 02C7          STA LINE_COLOR+1,Y
+     64  4+4   0059    A7 A9 02C8          STA LINE_COLOR+2,Y
+     65  2     005D    86 01               LDA #1
+     66  4+4   005F    A7 A9 02CA          STA LINE_COLOR+4,Y
+     67  4+4   0063    A7 A9 02CB          STA LINE_COLOR+5,Y
+     68  5     0067  108C 002A             CMPY #42
+     69  3     006B    27 06               BEQ KEYBOARD_RIGHT_DRAW_FIRST_VECTOR
+     70  4+4   006D    A7 A9 02CC          STA LINE_COLOR+6,Y
+     71  3     0071    20 04               BRA MOVE_PLAYER_RIGHT
+     72        0073                    KEYBOARD_RIGHT_DRAW_FIRST_VECTOR
+     73  4+4   0073    A7 A9 029C          STA LINE_COLOR-42,Y
+     74        0077                    MOVE_PLAYER_RIGHT
+     75  4+1   0077    31 23               LEAY 3,Y
+     76  3     0079    20 9A               BRA MAIN_LOOP
+     77        007B                    RIGHT_RESET
+     78  2     007B    86 06               LDA #6
+     79  4+4   007D    A7 A9 02C6          STA LINE_COLOR,Y
+     80  4+4   0081    A7 A9 02C7          STA LINE_COLOR+1,Y
+     81  4+4   0085    A7 A9 02C8          STA LINE_COLOR+2,Y
+     82  4     0089  108E 0000             LDY #0
+     83  2     008D    86 01               LDA #1
+     84  4+4   008F    A7 A9 02C7          STA LINE_COLOR+1,Y
+     85  4+4   0093    A7 A9 02C8          STA LINE_COLOR+2,Y
+     86  4+4   0097    A7 A9 02C9          STA LINE_COLOR+3,Y
+     87  3     009B    0E 15               JMP MAIN_LOOP
+     88
+     89        009D                    KEYBOARD_LEFT
+     90  5     009D  108C 0000             CMPY #0
+     91  3     00A1    27 2B               BEQ LEFT_RESET
+     92  2     00A3    86 06               LDA #6
+     93  4+4   00A5    A7 A9 02C7          STA LINE_COLOR+1,Y
+     94  4+4   00A9    A7 A9 02C8          STA LINE_COLOR+2,Y
+     95  5     00AD  108C 002D             CMPY #45
+     96  3     00B1    27 06               BEQ KEYBOARD_LEFT_ERASE_FIRST_VECTOR
+     97  4+4   00B3    A7 A9 02C9          STA LINE_COLOR+3,Y
+     98  3     00B7    20 03               BRA MOVE_PLAYER_LEFT
+     99        00B9                    KEYBOARD_LEFT_ERASE_FIRST_VECTOR
+    100  5     00B9    B7 02C6             STA LINE_COLOR
+    101        00BC                    MOVE_PLAYER_LEFT
+    102  2     00BC    86 01               LDA #1
+    103  4+4   00BE    A7 A9 02C5          STA LINE_COLOR-1,Y
+    104  4+4   00C2    A7 A9 02C4          STA LINE_COLOR-2,Y
+    105  4+4   00C6    A7 A9 02C3          STA LINE_COLOR-3,Y
+    106  4+1   00CA    31 3D               LEAY -3,Y
+    107  3     00CC    0E 15               JMP MAIN_LOOP
+    108        00CE                    LEFT_RESET
+    109  2     00CE    86 06               LDA #6
+    110  4+4   00D0    A7 A9 02C7          STA LINE_COLOR+1,Y
+    111  4+4   00D4    A7 A9 02C8          STA LINE_COLOR+2,Y
+    112  4+4   00D8    A7 A9 02C9          STA LINE_COLOR+3,Y
+    113  4     00DC  108E 002D             LDY #45
+    114  2     00E0    86 01               LDA #1
+    115  4+4   00E2    A7 A9 02C6          STA LINE_COLOR,Y
+    116  4+4   00E6    A7 A9 02C7          STA LINE_COLOR+1,Y
+    117  4+4   00EA    A7 A9 02C8          STA LINE_COLOR+2,Y
+    118  3     00EE    0E 15               JMP MAIN_LOOP
+    119
+    120        00F0                    KEYBOARD_UP
+    121  5     00F0    B6 0805             LDA SIZE
+    122  2     00F3    84 0F               ANDA #$0F
+    123  2     00F5    81 0F               CMPA #$0F
+    124  6     00F7  1027 FF1A             LBEQ MAIN_LOOP
+    125  7     00FB    7C 0805             INC SIZE
+    126  3     00FE    0E 15               JMP MAIN_LOOP
+    127        0100                    KEYBOARD_DOWN
+    128  5     0100    B6 0805             LDA SIZE
+    129  2     0103    84 0F               ANDA #$0F
+    130  2     0105    81 01               CMPA #$01
+    131  6     0107  1027 FF0A             LBEQ MAIN_LOOP
+    132  7     010B    7A 0805             DEC SIZE
+    133  3     010E    0E 15               JMP MAIN_LOOP
+    134
+    135        0110                    END_PRG
+    136  3     0110    20 FE               BRA END_PRG
+    137
+    138                                ********************************************************************************
+    139
+    140        0112                    CLEAR_SCREEN
+    141        0112                    WAIT_VIDEO_CHIP_CS                  * WAIT_EF9365_READY();
+    142  5     0112    B6 F000             LDA $F000
+    143  2     0115    84 04               ANDA #4
+    144  3     0117    27 F9               BEQ WAIT_VIDEO_CHIP_CS
+    145
+    146  2     0119    C6 04               LDB #$4
+    147  3     011B    8E F000             LDX #$F000
+    148  4+0   011E    E7 84           	STB ,X
+    149  5     0120    39                  RTS
+    150
+    151                                ********************************************************************************
+    152
+    153        0121                    VBLANK
+    154        0121                    WAIT_FOR_VSYNC
+    155  5     0121    B6 F000             LDA $F000
+    156  2     0124    84 02               ANDA #$02
+    157  3     0126    27 F9               BEQ WAIT_FOR_VSYNC
+    158        0128                    WAIT_FOR_VBLANK
+    159  5     0128    B6 F000             LDA $F000
+    160  2     012B    84 02               ANDA #$02
+    161  3     012D    26 F9               BNE WAIT_FOR_VBLANK
+    162  5     012F    39                  RTS
+    163
+    164                                ********************************************************************************
+    165
+    166        0130                    DRAW_LINE
+    167        0130                    WAIT_VIDEO_CHIP_DL                  * WAIT_EF9365_READY();
+    168                                *    LDA $F000
+    169                                *    ANDA #4
+    170                                *    BEQ WAIT_VIDEO_CHIP_DL
+    171
+    172  4+4   0130    A6 89 0161          LDA LINE_X1,X
+    173  5     0134    B7 F009             STA $F009   * X = X_START
+    174  7     0137    7F F008             CLR $F008   * ? = 0
+    175  7     013A    7F F00A             CLR $F00A   * ? = 0
+    176  4+4   013D    A6 89 01C7          LDA LINE_Y1,X
+    177  5     0141    B7 F00B             STA $F00B   * Y = B
+    178  4+4   0144    A6 89 022D          LDA LINE_DX,X
+    179  5     0148    B7 F005             STA $F005   * dX
+    180  4+4   014B    A6 89 02C6          LDA LINE_COLOR,X
+    181  5     014F    B7 F010             STA $F010   * color
+    182  4+4   0152    A6 89 0260          LDA LINE_DY,X
+    183  5     0156    B7 F007             STA $F007   * dY
+    184  4+4   0159    A6 89 0293          LDA LINE_CMD,X
+    185  5     015D    B7 F000             STA $F000   * CMD = draw_line
+    186  5     0160    39                  RTS
+    187
+    188        0161                    LINE_X1
+    189        0161   28 28 71 7D          FCB $28,$28,$71,$7d,$5a,$7d,$7d,$5a,$7d,$89,$85,$88,$95,$ad,$95,$96,$ae,$94,$a1,$dc,$a1,$a2,$dd,$a1,$a1,$dc,$a1,$ac,$ad,$95,$ad,$ad,$94,$85,$85,$88,$59,$59,$7c,$59,$7c,$58,$70,$70,$28,$71,$28,$70,0,0,0
+               0165   5A 7D 7D 5A
+               0169   7D 89 85 88
+               016D   95 AD 95 96
+               0171   AE 94 A1 DC
+               0175   A1 A2 DD A1
+               0179   A1 DC A1 AC
+               017D   AD 95 AD AD
+               0181   94 85 85 88
+               0185   59 59 7C 59
+               0189   7C 58 70 70
+               018D   28 71 28 70
+               0191   00 00 00
+    190        0194                    LINE_X2
+    191        0194   72 59 7D 5A          FCB $72,$59,$7d,$5a,$5a,$7d,$5a,$86,$89,$85,$ae,$94,$ad,$ad,$95,$ae,$dd,$a1,$dc,$dc,$a1,$dd,$dc,$a1,$dd,$ac,$95,$95,$ad,$95,$95,$86,$88,$88,$59,$7c,$7c,$59,$7c,$7b,$71,$29,$28,$70,$28,$28,$28,$71,0,0,0
+               0198   5A 7D 5A 86
+               019C   89 85 AE 94
+               01A0   AD AD 95 AE
+               01A4   DD A1 DC DC
+               01A8   A1 DD DC A1
+               01AC   DD AC 95 95
+               01B0   AD 95 95 86
+               01B4   88 88 59 7C
+               01B8   7C 59 7C 7B
+               01BC   71 29 28 70
+               01C0   28 28 28 71
+               01C4   00 00 00
+    192        01C7                    LINE_Y1
+    193        01C7   4A 4A 80 80          FCB $4a,$4a,$80,$80,$49,$81,$74,$25,$75,$74,$25,$75,$74,$24,$75,$82,$4c,$82,$82,$4c,$81,$8e,$79,$8e,$97,$a7,$97,$a7,$a8,$98,$d1,$d1,$a6,$d0,$d0,$a6,$d0,$d0,$a6,$a7,$96,$a7,$96,$95,$a7,$8d,$82,$8c,0,0,0
+               01CB   49 81 74 25
+               01CF   75 74 25 75
+               01D3   74 24 75 82
+               01D7   4C 82 82 4C
+               01DB   81 8E 79 8E
+               01DF   97 A7 97 A7
+               01E3   A8 98 D1 D1
+               01E7   A6 D0 D0 A6
+               01EB   D0 D0 A6 A7
+               01EF   96 A7 96 95
+               01F3   A7 8D 82 8C
+               01F7   00 00 00
+    194        01FA                    LINE_Y2
+    195        01FA   80 4A 80 4A          FCB $80,$4a,$80,$4a,$25,$74,$24,$25,$75,$24,$25,$75,$24,$4d,$83,$4c,$4c,$82,$4c,$7a,$8f,$79,$a8,$99,$a7,$a7,$97,$98,$d2,$a7,$a6,$d1,$a6,$a6,$d0,$a6,$a6,$a7,$96,$96,$96,$a7,$a7,$8d,$82,$82,$4b,$80,0,0,0
+               01FE   25 74 24 25
+               0202   75 24 25 75
+               0206   24 4D 83 4C
+               020A   4C 82 4C 7A
+               020E   8F 79 A8 99
+               0212   A7 A7 97 98
+               0216   D2 A7 A6 D1
+               021A   A6 A6 D0 A6
+               021E   A6 A7 96 96
+               0222   96 A7 A7 8D
+               0226   82 82 4B 80
+               022A   00 00 00
+    196        022D                    LINE_DX
+    197        022D   4A 31 0C 23          FCB $4a,$31,$c,$23,$0,$0,$23,$2c,$c,$4,$29,$c,$18,$0,$0,$18,$2f,$d,$3b,$0,$0,$3b,$1,$0,$3c,$30,$c,$17,$0,$0,$18,$27,$c,$3,$2c,$c,$23,$0,$0,$22,$b,$2f,$48,$0,$0,$49,$0,$1,0,0,0
+               0231   00 00 23 2C
+               0235   0C 04 29 0C
+               0239   18 00 00 18
+               023D   2F 0D 3B 00
+               0241   00 3B 01 00
+               0245   3C 30 0C 17
+               0249   00 00 18 27
+               024D   0C 03 2C 0C
+               0251   23 00 00 22
+               0255   0B 2F 48 00
+               0259   00 49 00 01
+               025D   00 00 00
+    198        0260                    LINE_DY
+    199        0260   36 00 00 36          FCB $36,$0,$0,$36,$24,$d,$50,$0,$0,$50,$0,$0,$50,$29,$e,$36,$0,$0,$36,$2e,$e,$15,$2f,$b,$10,$0,$0,$f,$2a,$f,$2b,$0,$0,$2a,$0,$0,$2a,$29,$10,$11,$0,$0,$11,$8,$25,$b,$37,$c,0,0,0
+               0264   24 0D 50 00
+               0268   00 50 00 00
+               026C   50 29 0E 36
+               0270   00 00 36 2E
+               0274   0E 15 2F 0B
+               0278   10 00 00 0F
+               027C   2A 0F 2B 00
+               0280   00 2A 00 00
+               0284   2A 29 10 11
+               0288   00 00 11 08
+               028C   25 0B 37 0C
+               0290   00 00 00
+    200        0293                    LINE_CMD
+    201        0293   11 11 11 17          FCB $11,$11,$11,$17,$15,$15,$17,$11,$11,$17,$11,$11,$15,$11,$11,$15,$11,$11,$15,$11,$11,$15,$13,$11,$11,$13,$13,$17,$11,$11,$17,$13,$13,$15,$13,$13,$15,$15,$15,$15,$13,$13,$13,$15,$15,$17,$15,$15,0,0,0
+               0297   15 15 17 11
+               029B   11 17 11 11
+               029F   15 11 11 15
+               02A3   11 11 15 11
+               02A7   11 15 13 11
+               02AB   11 13 13 17
+               02AF   11 11 17 13
+               02B3   13 15 13 13
+               02B7   15 15 15 15
+               02BB   13 13 13 15
+               02BF   15 17 15 15
+               02C3   00 00 00
+    202        02C6                    LINE_COLOR
+    203        02C6   01 01 01 01          FCB $1,$1,$1,$1,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,$6,0,0,0
+               02CA   06 06 06 06
+               02CE   06 06 06 06
+               02D2   06 06 06 06
+               02D6   06 06 06 06
+               02DA   06 06 06 06
+               02DE   06 06 06 06
+               02E2   06 06 06 06
+               02E6   06 06 06 06
+               02EA   06 06 06 06
+               02EE   06 06 06 06
+               02F2   06 06 06 06
+               02F6   00 00 00
+    204
+    205                                ****
+    206                                * Couleurs:
+    207                                * - 0: blanc
+    208                                * - 1: jaune
+    209                                * - 2: fuchsia
+    210                                * - 3: rouge
+    211                                * - 4: turquoise
+    212                                * - 5: vert
+    213                                * - 6: bleu
+    214                                * - 7: noir?
+    215                                * - 8: gris
+    216                                * - 9: jaune foncé
+    217                                * - A: fuchsia fondé
+    218                                * - B: rouge foncé
+    219                                * - C: turquoise foncé
+    220                                * - D: vert foncé
+    221                                * - E: bleu foncé
+    222                                * - F: noir

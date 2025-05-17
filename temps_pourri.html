@@ -1,0 +1,371 @@
+<html>
+<head>
+<title>temps_pourri.asm</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="6809 code">
+<meta name="description" content="6809 compiled program">
+<style type=text/css>
+body { background-color: #ffffff; padding-right: 15px; padding-left: 15px; padding-top: 15px; padding-bottom: 15px; }
+td { font-family: Verdana,Geneva,Arial,Helvetica,sans-serif; font-size: 100%; font-weight: normal; font-style: normal; text-align: left; text-decoration: none; color: #202020; background-color: #ffffff }
+a { text-decoration: none; }
+span.inst { color: #409000; font-weight: bold; }
+span.green { color: #409000; }
+span.dirc { color: #915b05; font-weight: bold; }
+span.maroon { color: #915b05; }
+span.val { color: #d040a0; }
+span.comment { color: #2050b0; }
+span.bgrey { color: #808080; font-weight: bold; }
+span.grey { color: #808080; }
+span.bold { font-weight: bold; }
+span.bred { color: #9a2020; font-weight: bold; }
+span.red { color: #9a2020; }
+span.bblue { color: #2050b0; font-weight: bold; }
+span.blue { color: #2050b0; }
+span.borange { color: #e08020; font-weight: bold; }
+span.error { background-color: #9a2020; color: #ffffff; font-weight: bold; }
+a.href { color: #202020; font-weight: normal; }
+a.href:hover { text-decoration: underline; }
+a.macro_href { color: #e08020; font-weight: bold; }
+a.macro_href:hover { text-decoration: underline; }
+a.symbol_label { color: #202020; font-weight: bold; }
+a.symbol_label:hover { text-decoration: underline; }
+a.symbol_equ { color: #2050b0; font-weight: bold; }
+a.symbol_equ:hover { text-decoration: underline; }
+a.symbol_set { color: #409000; font-weight: bold; }
+a.symbol_set:hover { text-decoration: underline; }
+a.symbol_macro { color: #915b05; font-weight: bold; }
+a.symbol_macro:hover { text-decoration: underline; }
+</style>
+</head>
+
+<body>
+<table width="100%" height="0" border="0" cellpadding="0" cellspacing="0">
+<tr>
+<td width="100%" height="0">
+<pre>
+<span class="bblue">Pass1</span>
+<span class="bblue">Pass2</span>
+      1                        <span class="bgrey">0319</span>    <a name="0">LINE_COUNTER2</a> <span class="dirc">EQU</span> <span class="val">$0319</span>
+      2                        <span class="bgrey">000E</span>    <a name="1">COLOR_BG</a>    <span class="dirc">EQU</span> <span class="val">$E</span>
+      3                        <span class="bgrey">0030</span>    <a name="2">MAZE_NB_LINES</a>   <span class="dirc">EQU</span> <span class="val">48</span>
+      4
+      5                        <span class="bgrey">0800</span>    <a name="4">NB_LINES</a>    <span class="dirc">EQU</span> <span class="val">$800</span>
+      6                        <span class="bgrey">0801</span>    <a name="5">NB_VECTORS</a>  <span class="dirc">EQU</span> <span class="val">$801</span>
+      7                        <span class="bgrey">0802</span>    <a name="6">SCAN_LINE</a>   <span class="dirc">EQU</span> <span class="val">$802</span>
+      8                        <span class="bgrey">0803</span>    <a name="7">COLOR</a>       <span class="dirc">EQU</span> <span class="val">$803</span>
+      9                        <span class="bgrey">0804</span>    <a name="8">CNT</a>         <span class="dirc">EQU</span> <span class="val">$804</span>
+     10                        <span class="bgrey">0805</span>    <a name="9">SIZE</a>        <span class="dirc">EQU</span> <span class="val">$805</span>
+     11                        <span class="bgrey">0806</span>    <a name="10">REG1</a>        <span class="dirc">EQU</span> <span class="val">$806</span>
+     12                        <span class="bgrey">0807</span>    <a name="11">TOP_LINE</a>    <span class="dirc">EQU</span> <span class="val">$807</span>
+     13                        <span class="bgrey">0808</span>    <a name="12">LINE_COUNTER</a> <span class="dirc">EQU</span> <span class="val">$808</span>
+     14                        <span class="bgrey">0809</span>    <a name="13">PLAYER_POS</a>  <span class="dirc">EQU</span> <span class="val">$809</span>
+     15
+     16        0000                        <span class="dirc">ORG</span> <span class="val">$0000</span>
+     17
+     18        0000                    <a name="17">WAIT_VIDEO_CHIP</a>
+     19  5     0000  <span class="bgrey">  B6 F000</span>             <span class="inst">LDA</span> <span class="val">$F000</span>
+     20  2     0003  <span class="bgrey">  84 04</span>               <span class="inst">ANDA</span> #<span class="val">4</span>
+     21  3     0005  <span class="bgrey">  27 F9</span>               <span class="inst">BEQ</span> <a href="#17" class="href">WAIT_VIDEO_CHIP</a>
+     22
+     23  7     0007  <span class="bgrey">  7F F010</span>             <span class="inst">CLR</span> <span class="val">$F010</span>
+     24
+     25        000A                    <a name="24">WAIT_VIDEO_CHIP2</a>
+     26  5     000A  <span class="bgrey">  B6 F000</span>             <span class="inst">LDA</span> <span class="val">$F000</span>
+     27  2     000D  <span class="bgrey">  84 04</span>               <span class="inst">ANDA</span> #<span class="val">4</span>
+     28  3     000F  <span class="bgrey">  27 F9</span>               <span class="inst">BEQ</span> <a href="#24" class="href">WAIT_VIDEO_CHIP2</a>
+     29
+     30  4     0011  <span class="bgrey">108E 0000</span>             <span class="inst">LDY</span> #<span class="val">0</span>
+     31
+     32        0015                    <a name="31">MAIN_LOOP</a>
+     33  8     0015  <span class="bgrey">  BD 0121</span>             <span class="inst">JSR</span> <a href="#152" class="href">VBLANK</a>
+     34  8     0018  <span class="bgrey">  BD 0112</span>             <span class="inst">JSR</span> <a href="#139" class="href">CLEAR_SCREEN</a>
+     35
+     36  3     001B  <span class="bgrey">  8E 0030</span>             <span class="inst">LDX</span> #<a href="#2" class="href">MAZE_NB_LINES</a>
+     37        001E                    <a name="36">LINE_LOOP</a>
+     38  4+1   001E  <span class="bgrey">  30 1F</span>               <span class="inst">LEAX</span> -<span class="val">1</span>,X
+     39  8     0020  <span class="bgrey">  BD 0130</span>             <span class="inst">JSR</span> <a href="#165" class="href">DRAW_LINE</a>
+     40  4     0023  <span class="bgrey">  8C 0000</span>             <span class="inst">CMPX</span> #<span class="val">0</span>
+     41  3     0026  <span class="bgrey">  26 F6</span>               <span class="inst">BNE</span> <a href="#36" class="href">LINE_LOOP</a>
+     42
+     43        0028                    <a name="42">CHECK_KEYBOARD</a>
+     44  5     0028  <span class="bgrey">  B6 F046</span>             <span class="inst">LDA</span> <span class="val">$F046</span>
+     45  2     002B  <span class="bgrey">  81 FF</span>               <span class="inst">CMPA</span> #<span class="val">$FF</span>
+     46  3     002D  <span class="bgrey">  27 E6</span>               <span class="inst">BEQ</span> <a href="#31" class="href">MAIN_LOOP</a>
+     47
+     48  2     002F  <span class="bgrey">  81 FE</span>               <span class="inst">CMPA</span> #<span class="val">$FE</span>
+     49  6     0031  <span class="bgrey">1027 00BB</span>             <span class="inst">LBEQ</span> <a href="#119" class="href">KEYBOARD_UP</a>
+     50  2     0035  <span class="bgrey">  81 7F</span>               <span class="inst">CMPA</span> #<span class="val">$7F</span>
+     51  6     0037  <span class="bgrey">1027 00C5</span>             <span class="inst">LBEQ</span> <a href="#126" class="href">KEYBOARD_DOWN</a>
+     52  2     003B  <span class="bgrey">  81 DF</span>               <span class="inst">CMPA</span> #<span class="val">$DF</span>
+     53  6     003D  <span class="bgrey">1027 005C</span>             <span class="inst">LBEQ</span> <a href="#88" class="href">KEYBOARD_LEFT</a>
+     54  2     0041  <span class="bgrey">  81 BF</span>               <span class="inst">CMPA</span> #<span class="val">$BF</span>
+     55  6     0043  <span class="bgrey">1027 0002</span>             <span class="inst">LBEQ</span> <a href="#57" class="href">KEYBOARD_RIGHT</a>
+     56  3     0047  <span class="bgrey">  20 CC</span>               <span class="inst">BRA</span> <a href="#31" class="href">MAIN_LOOP</a>
+     57
+     58        0049                    <a name="57">KEYBOARD_RIGHT</a>
+     59  5     0049  <span class="bgrey">108C 002D</span>             <span class="inst">CMPY</span> #<span class="val">45</span>
+     60  3     004D  <span class="bgrey">  27 2C</span>               <span class="inst">BEQ</span> <a href="#76" class="href">RIGHT_RESET</a>
+     61  2     004F  <span class="bgrey">  86 06</span>               <span class="inst">LDA</span> #<span class="val">6</span>
+     62  4+4   0051  <span class="bgrey">  A7 A9 02C6</span>          <span class="inst">STA</span> <a href="#201" class="href">LINE_COLOR</a>,Y
+     63  4+4   0055  <span class="bgrey">  A7 A9 02C7</span>          <span class="inst">STA</span> <a href="#201" class="href">LINE_COLOR</a>+<span class="val">1</span>,Y
+     64  4+4   0059  <span class="bgrey">  A7 A9 02C8</span>          <span class="inst">STA</span> <a href="#201" class="href">LINE_COLOR</a>+<span class="val">2</span>,Y
+     65  2     005D  <span class="bgrey">  86 01</span>               <span class="inst">LDA</span> #<span class="val">1</span>
+     66  4+4   005F  <span class="bgrey">  A7 A9 02CA</span>          <span class="inst">STA</span> <a href="#201" class="href">LINE_COLOR</a>+<span class="val">4</span>,Y
+     67  4+4   0063  <span class="bgrey">  A7 A9 02CB</span>          <span class="inst">STA</span> <a href="#201" class="href">LINE_COLOR</a>+<span class="val">5</span>,Y
+     68  5     0067  <span class="bgrey">108C 002A</span>             <span class="inst">CMPY</span> #<span class="val">42</span>
+     69  3     006B  <span class="bgrey">  27 06</span>               <span class="inst">BEQ</span> <a href="#71" class="href">KEYBOARD_RIGHT_DRAW_FIRST_VECTOR</a>
+     70  4+4   006D  <span class="bgrey">  A7 A9 02CC</span>          <span class="inst">STA</span> <a href="#201" class="href">LINE_COLOR</a>+<span class="val">6</span>,Y
+     71  3     0071  <span class="bgrey">  20 04</span>               <span class="inst">BRA</span> <a href="#73" class="href">MOVE_PLAYER_RIGHT</a>
+     72        0073                    <a name="71">KEYBOARD_RIGHT_DRAW_FIRST_VECTOR</a>
+     73  4+4   0073  <span class="bgrey">  A7 A9 029C</span>          <span class="inst">STA</span> <a href="#201" class="href">LINE_COLOR</a>-<span class="val">42</span>,Y
+     74        0077                    <a name="73">MOVE_PLAYER_RIGHT</a>
+     75  4+1   0077  <span class="bgrey">  31 23</span>               <span class="inst">LEAY</span> <span class="val">3</span>,Y
+     76  3     0079  <span class="bgrey">  20 9A</span>               <span class="inst">BRA</span> <a href="#31" class="href">MAIN_LOOP</a>
+     77        007B                    <a name="76">RIGHT_RESET</a>
+     78  2     007B  <span class="bgrey">  86 06</span>               <span class="inst">LDA</span> #<span class="val">6</span>
+     79  4+4   007D  <span class="bgrey">  A7 A9 02C6</span>          <span class="inst">STA</span> <a href="#201" class="href">LINE_COLOR</a>,Y
+     80  4+4   0081  <span class="bgrey">  A7 A9 02C7</span>          <span class="inst">STA</span> <a href="#201" class="href">LINE_COLOR</a>+<span class="val">1</span>,Y
+     81  4+4   0085  <span class="bgrey">  A7 A9 02C8</span>          <span class="inst">STA</span> <a href="#201" class="href">LINE_COLOR</a>+<span class="val">2</span>,Y
+     82  4     0089  <span class="bgrey">108E 0000</span>             <span class="inst">LDY</span> #<span class="val">0</span>
+     83  2     008D  <span class="bgrey">  86 01</span>               <span class="inst">LDA</span> #<span class="val">1</span>
+     84  4+4   008F  <span class="bgrey">  A7 A9 02C7</span>          <span class="inst">STA</span> <a href="#201" class="href">LINE_COLOR</a>+<span class="val">1</span>,Y
+     85  4+4   0093  <span class="bgrey">  A7 A9 02C8</span>          <span class="inst">STA</span> <a href="#201" class="href">LINE_COLOR</a>+<span class="val">2</span>,Y
+     86  4+4   0097  <span class="bgrey">  A7 A9 02C9</span>          <span class="inst">STA</span> <a href="#201" class="href">LINE_COLOR</a>+<span class="val">3</span>,Y
+     87  3     009B  <span class="bgrey">  0E 15</span>               <span class="inst">JMP</span> <a href="#31" class="href">MAIN_LOOP</a>
+     88
+     89        009D                    <a name="88">KEYBOARD_LEFT</a>
+     90  5     009D  <span class="bgrey">108C 0000</span>             <span class="inst">CMPY</span> #<span class="val">0</span>
+     91  3     00A1  <span class="bgrey">  27 2B</span>               <span class="inst">BEQ</span> <a href="#107" class="href">LEFT_RESET</a>
+     92  2     00A3  <span class="bgrey">  86 06</span>               <span class="inst">LDA</span> #<span class="val">6</span>
+     93  4+4   00A5  <span class="bgrey">  A7 A9 02C7</span>          <span class="inst">STA</span> <a href="#201" class="href">LINE_COLOR</a>+<span class="val">1</span>,Y
+     94  4+4   00A9  <span class="bgrey">  A7 A9 02C8</span>          <span class="inst">STA</span> <a href="#201" class="href">LINE_COLOR</a>+<span class="val">2</span>,Y
+     95  5     00AD  <span class="bgrey">108C 002D</span>             <span class="inst">CMPY</span> #<span class="val">45</span>
+     96  3     00B1  <span class="bgrey">  27 06</span>               <span class="inst">BEQ</span> <a href="#98" class="href">KEYBOARD_LEFT_ERASE_FIRST_VECTOR</a>
+     97  4+4   00B3  <span class="bgrey">  A7 A9 02C9</span>          <span class="inst">STA</span> <a href="#201" class="href">LINE_COLOR</a>+<span class="val">3</span>,Y
+     98  3     00B7  <span class="bgrey">  20 03</span>               <span class="inst">BRA</span> <a href="#100" class="href">MOVE_PLAYER_LEFT</a>
+     99        00B9                    <a name="98">KEYBOARD_LEFT_ERASE_FIRST_VECTOR</a>
+    100  5     00B9  <span class="bgrey">  B7 02C6</span>             <span class="inst">STA</span> <a href="#201" class="href">LINE_COLOR</a>
+    101        00BC                    <a name="100">MOVE_PLAYER_LEFT</a>
+    102  2     00BC  <span class="bgrey">  86 01</span>               <span class="inst">LDA</span> #<span class="val">1</span>
+    103  4+4   00BE  <span class="bgrey">  A7 A9 02C5</span>          <span class="inst">STA</span> <a href="#201" class="href">LINE_COLOR</a>-<span class="val">1</span>,Y
+    104  4+4   00C2  <span class="bgrey">  A7 A9 02C4</span>          <span class="inst">STA</span> <a href="#201" class="href">LINE_COLOR</a>-<span class="val">2</span>,Y
+    105  4+4   00C6  <span class="bgrey">  A7 A9 02C3</span>          <span class="inst">STA</span> <a href="#201" class="href">LINE_COLOR</a>-<span class="val">3</span>,Y
+    106  4+1   00CA  <span class="bgrey">  31 3D</span>               <span class="inst">LEAY</span> -<span class="val">3</span>,Y
+    107  3     00CC  <span class="bgrey">  0E 15</span>               <span class="inst">JMP</span> <a href="#31" class="href">MAIN_LOOP</a>
+    108        00CE                    <a name="107">LEFT_RESET</a>
+    109  2     00CE  <span class="bgrey">  86 06</span>               <span class="inst">LDA</span> #<span class="val">6</span>
+    110  4+4   00D0  <span class="bgrey">  A7 A9 02C7</span>          <span class="inst">STA</span> <a href="#201" class="href">LINE_COLOR</a>+<span class="val">1</span>,Y
+    111  4+4   00D4  <span class="bgrey">  A7 A9 02C8</span>          <span class="inst">STA</span> <a href="#201" class="href">LINE_COLOR</a>+<span class="val">2</span>,Y
+    112  4+4   00D8  <span class="bgrey">  A7 A9 02C9</span>          <span class="inst">STA</span> <a href="#201" class="href">LINE_COLOR</a>+<span class="val">3</span>,Y
+    113  4     00DC  <span class="bgrey">108E 002D</span>             <span class="inst">LDY</span> #<span class="val">45</span>
+    114  2     00E0  <span class="bgrey">  86 01</span>               <span class="inst">LDA</span> #<span class="val">1</span>
+    115  4+4   00E2  <span class="bgrey">  A7 A9 02C6</span>          <span class="inst">STA</span> <a href="#201" class="href">LINE_COLOR</a>,Y
+    116  4+4   00E6  <span class="bgrey">  A7 A9 02C7</span>          <span class="inst">STA</span> <a href="#201" class="href">LINE_COLOR</a>+<span class="val">1</span>,Y
+    117  4+4   00EA  <span class="bgrey">  A7 A9 02C8</span>          <span class="inst">STA</span> <a href="#201" class="href">LINE_COLOR</a>+<span class="val">2</span>,Y
+    118  3     00EE  <span class="bgrey">  0E 15</span>               <span class="inst">JMP</span> <a href="#31" class="href">MAIN_LOOP</a>
+    119
+    120        00F0                    <a name="119">KEYBOARD_UP</a>
+    121  5     00F0  <span class="bgrey">  B6 0805</span>             <span class="inst">LDA</span> <a href="#9" class="href">SIZE</a>
+    122  2     00F3  <span class="bgrey">  84 0F</span>               <span class="inst">ANDA</span> #<span class="val">$0F</span>
+    123  2     00F5  <span class="bgrey">  81 0F</span>               <span class="inst">CMPA</span> #<span class="val">$0F</span>
+    124  6     00F7  <span class="bgrey">1027 FF1A</span>             <span class="inst">LBEQ</span> <a href="#31" class="href">MAIN_LOOP</a>
+    125  7     00FB  <span class="bgrey">  7C 0805</span>             <span class="inst">INC</span> <a href="#9" class="href">SIZE</a>
+    126  3     00FE  <span class="bgrey">  0E 15</span>               <span class="inst">JMP</span> <a href="#31" class="href">MAIN_LOOP</a>
+    127        0100                    <a name="126">KEYBOARD_DOWN</a>
+    128  5     0100  <span class="bgrey">  B6 0805</span>             <span class="inst">LDA</span> <a href="#9" class="href">SIZE</a>
+    129  2     0103  <span class="bgrey">  84 0F</span>               <span class="inst">ANDA</span> #<span class="val">$0F</span>
+    130  2     0105  <span class="bgrey">  81 01</span>               <span class="inst">CMPA</span> #<span class="val">$01</span>
+    131  6     0107  <span class="bgrey">1027 FF0A</span>             <span class="inst">LBEQ</span> <a href="#31" class="href">MAIN_LOOP</a>
+    132  7     010B  <span class="bgrey">  7A 0805</span>             <span class="inst">DEC</span> <a href="#9" class="href">SIZE</a>
+    133  3     010E  <span class="bgrey">  0E 15</span>               <span class="inst">JMP</span> <a href="#31" class="href">MAIN_LOOP</a>
+    134
+    135        0110                    <a name="134">END_PRG</a>
+    136  3     0110  <span class="bgrey">  20 FE</span>               <span class="inst">BRA</span> <a href="#134" class="href">END_PRG</a>
+    137
+    138                                <span class="comment">********************************************************************************</span>
+    139
+    140        0112                    <a name="139">CLEAR_SCREEN</a>
+    141        0112                    <a name="140">WAIT_VIDEO_CHIP_CS</a>                  <span class="comment">*</span> <span class="comment">WAIT_EF9365_READY();</span>
+    142  5     0112  <span class="bgrey">  B6 F000</span>             <span class="inst">LDA</span> <span class="val">$F000</span>
+    143  2     0115  <span class="bgrey">  84 04</span>               <span class="inst">ANDA</span> #<span class="val">4</span>
+    144  3     0117  <span class="bgrey">  27 F9</span>               <span class="inst">BEQ</span> <a href="#140" class="href">WAIT_VIDEO_CHIP_CS</a>
+    145
+    146  2     0119  <span class="bgrey">  C6 04</span>               <span class="inst">LDB</span> #<span class="val">$4</span>
+    147  3     011B  <span class="bgrey">  8E F000</span>             <span class="inst">LDX</span> #<span class="val">$F000</span>
+    148  4+0   011E  <span class="bgrey">  E7 84</span>           	<span class="inst">STB</span> ,X
+    149  5     0120  <span class="bgrey">  39</span>                  <span class="inst">RTS</span>
+    150
+    151                                <span class="comment">********************************************************************************</span>
+    152
+    153        0121                    <a name="152">VBLANK</a>
+    154        0121                    <a name="153">WAIT_FOR_VSYNC</a>
+    155  5     0121  <span class="bgrey">  B6 F000</span>             <span class="inst">LDA</span> <span class="val">$F000</span>
+    156  2     0124  <span class="bgrey">  84 02</span>               <span class="inst">ANDA</span> #<span class="val">$02</span>
+    157  3     0126  <span class="bgrey">  27 F9</span>               <span class="inst">BEQ</span> <a href="#153" class="href">WAIT_FOR_VSYNC</a>
+    158        0128                    <a name="157">WAIT_FOR_VBLANK</a>
+    159  5     0128  <span class="bgrey">  B6 F000</span>             <span class="inst">LDA</span> <span class="val">$F000</span>
+    160  2     012B  <span class="bgrey">  84 02</span>               <span class="inst">ANDA</span> #<span class="val">$02</span>
+    161  3     012D  <span class="bgrey">  26 F9</span>               <span class="inst">BNE</span> <a href="#157" class="href">WAIT_FOR_VBLANK</a>
+    162  5     012F  <span class="bgrey">  39</span>                  <span class="inst">RTS</span>
+    163
+    164                                <span class="comment">********************************************************************************</span>
+    165
+    166        0130                    <a name="165">DRAW_LINE</a>
+    167        0130                    <a name="166">WAIT_VIDEO_CHIP_DL</a>                  <span class="comment">*</span> <span class="comment">WAIT_EF9365_READY();</span>
+    168                                <span class="comment">*</span>    <span class="comment">LDA $F000</span>
+    169                                <span class="comment">*</span>    <span class="comment">ANDA #4</span>
+    170                                <span class="comment">*</span>    <span class="comment">BEQ WAIT_VIDEO_CHIP_DL</span>
+    171
+    172  4+4   0130  <span class="bgrey">  A6 89 0161</span>          <span class="inst">LDA</span> <a href="#187" class="href">LINE_X1</a>,X
+    173  5     0134  <span class="bgrey">  B7 F009</span>             <span class="inst">STA</span> <span class="val">$F009</span><span class="comment">   * X = X_START</span>
+    174  7     0137  <span class="bgrey">  7F F008</span>             <span class="inst">CLR</span> <span class="val">$F008</span><span class="comment">   * ? = 0</span>
+    175  7     013A  <span class="bgrey">  7F F00A</span>             <span class="inst">CLR</span> <span class="val">$F00A</span><span class="comment">   * ? = 0</span>
+    176  4+4   013D  <span class="bgrey">  A6 89 01C7</span>          <span class="inst">LDA</span> <a href="#191" class="href">LINE_Y1</a>,X
+    177  5     0141  <span class="bgrey">  B7 F00B</span>             <span class="inst">STA</span> <span class="val">$F00B</span><span class="comment">   * Y = B</span>
+    178  4+4   0144  <span class="bgrey">  A6 89 022D</span>          <span class="inst">LDA</span> <a href="#195" class="href">LINE_DX</a>,X
+    179  5     0148  <span class="bgrey">  B7 F005</span>             <span class="inst">STA</span> <span class="val">$F005</span><span class="comment">   * dX</span>
+    180  4+4   014B  <span class="bgrey">  A6 89 02C6</span>          <span class="inst">LDA</span> <a href="#201" class="href">LINE_COLOR</a>,X
+    181  5     014F  <span class="bgrey">  B7 F010</span>             <span class="inst">STA</span> <span class="val">$F010</span><span class="comment">   * color</span>
+    182  4+4   0152  <span class="bgrey">  A6 89 0260</span>          <span class="inst">LDA</span> <a href="#197" class="href">LINE_DY</a>,X
+    183  5     0156  <span class="bgrey">  B7 F007</span>             <span class="inst">STA</span> <span class="val">$F007</span><span class="comment">   * dY</span>
+    184  4+4   0159  <span class="bgrey">  A6 89 0293</span>          <span class="inst">LDA</span> <a href="#199" class="href">LINE_CMD</a>,X
+    185  5     015D  <span class="bgrey">  B7 F000</span>             <span class="inst">STA</span> <span class="val">$F000</span><span class="comment">   * CMD = draw_line</span>
+    186  5     0160  <span class="bgrey">  39</span>                  <span class="inst">RTS</span>
+    187
+    188        0161                    <a name="187">LINE_X1</a>
+    189        0161  <span class="bgrey"> 28 28 71 7D</span>          <span class="dirc">FCB</span> <span class="val">$28</span>,<span class="val">$28</span>,<span class="val">$71</span>,<span class="val">$7d</span>,<span class="val">$5a</span>,<span class="val">$7d</span>,<span class="val">$7d</span>,<span class="val">$5a</span>,<span class="val">$7d</span>,<span class="val">$89</span>,<span class="val">$85</span>,<span class="val">$88</span>,<span class="val">$95</span>,<span class="val">$ad</span>,<span class="val">$95</span>,<span class="val">$96</span>,<span class="val">$ae</span>,<span class="val">$94</span>,<span class="val">$a1</span>,<span class="val">$dc</span>,<span class="val">$a1</span>,<span class="val">$a2</span>,<span class="val">$dd</span>,<span class="val">$a1</span>,<span class="val">$a1</span>,<span class="val">$dc</span>,<span class="val">$a1</span>,<span class="val">$ac</span>,<span class="val">$ad</span>,<span class="val">$95</span>,<span class="val">$ad</span>,<span class="val">$ad</span>,<span class="val">$94</span>,<span class="val">$85</span>,<span class="val">$85</span>,<span class="val">$88</span>,<span class="val">$59</span>,<span class="val">$59</span>,<span class="val">$7c</span>,<span class="val">$59</span>,<span class="val">$7c</span>,<span class="val">$58</span>,<span class="val">$70</span>,<span class="val">$70</span>,<span class="val">$28</span>,<span class="val">$71</span>,<span class="val">$28</span>,<span class="val">$70</span>,<span class="val">0</span>,<span class="val">0</span>,<span class="val">0</span>
+               0165  <span class="bgrey"> 5A 7D 7D 5A</span>
+               0169  <span class="bgrey"> 7D 89 85 88</span>
+               016D  <span class="bgrey"> 95 AD 95 96</span>
+               0171  <span class="bgrey"> AE 94 A1 DC</span>
+               0175  <span class="bgrey"> A1 A2 DD A1</span>
+               0179  <span class="bgrey"> A1 DC A1 AC</span>
+               017D  <span class="bgrey"> AD 95 AD AD</span>
+               0181  <span class="bgrey"> 94 85 85 88</span>
+               0185  <span class="bgrey"> 59 59 7C 59</span>
+               0189  <span class="bgrey"> 7C 58 70 70</span>
+               018D  <span class="bgrey"> 28 71 28 70</span>
+               0191  <span class="bgrey"> 00 00 00</span>
+    190        0194                    <a name="189">LINE_X2</a>
+    191        0194  <span class="bgrey"> 72 59 7D 5A</span>          <span class="dirc">FCB</span> <span class="val">$72</span>,<span class="val">$59</span>,<span class="val">$7d</span>,<span class="val">$5a</span>,<span class="val">$5a</span>,<span class="val">$7d</span>,<span class="val">$5a</span>,<span class="val">$86</span>,<span class="val">$89</span>,<span class="val">$85</span>,<span class="val">$ae</span>,<span class="val">$94</span>,<span class="val">$ad</span>,<span class="val">$ad</span>,<span class="val">$95</span>,<span class="val">$ae</span>,<span class="val">$dd</span>,<span class="val">$a1</span>,<span class="val">$dc</span>,<span class="val">$dc</span>,<span class="val">$a1</span>,<span class="val">$dd</span>,<span class="val">$dc</span>,<span class="val">$a1</span>,<span class="val">$dd</span>,<span class="val">$ac</span>,<span class="val">$95</span>,<span class="val">$95</span>,<span class="val">$ad</span>,<span class="val">$95</span>,<span class="val">$95</span>,<span class="val">$86</span>,<span class="val">$88</span>,<span class="val">$88</span>,<span class="val">$59</span>,<span class="val">$7c</span>,<span class="val">$7c</span>,<span class="val">$59</span>,<span class="val">$7c</span>,<span class="val">$7b</span>,<span class="val">$71</span>,<span class="val">$29</span>,<span class="val">$28</span>,<span class="val">$70</span>,<span class="val">$28</span>,<span class="val">$28</span>,<span class="val">$28</span>,<span class="val">$71</span>,<span class="val">0</span>,<span class="val">0</span>,<span class="val">0</span>
+               0198  <span class="bgrey"> 5A 7D 5A 86</span>
+               019C  <span class="bgrey"> 89 85 AE 94</span>
+               01A0  <span class="bgrey"> AD AD 95 AE</span>
+               01A4  <span class="bgrey"> DD A1 DC DC</span>
+               01A8  <span class="bgrey"> A1 DD DC A1</span>
+               01AC  <span class="bgrey"> DD AC 95 95</span>
+               01B0  <span class="bgrey"> AD 95 95 86</span>
+               01B4  <span class="bgrey"> 88 88 59 7C</span>
+               01B8  <span class="bgrey"> 7C 59 7C 7B</span>
+               01BC  <span class="bgrey"> 71 29 28 70</span>
+               01C0  <span class="bgrey"> 28 28 28 71</span>
+               01C4  <span class="bgrey"> 00 00 00</span>
+    192        01C7                    <a name="191">LINE_Y1</a>
+    193        01C7  <span class="bgrey"> 4A 4A 80 80</span>          <span class="dirc">FCB</span> <span class="val">$4a</span>,<span class="val">$4a</span>,<span class="val">$80</span>,<span class="val">$80</span>,<span class="val">$49</span>,<span class="val">$81</span>,<span class="val">$74</span>,<span class="val">$25</span>,<span class="val">$75</span>,<span class="val">$74</span>,<span class="val">$25</span>,<span class="val">$75</span>,<span class="val">$74</span>,<span class="val">$24</span>,<span class="val">$75</span>,<span class="val">$82</span>,<span class="val">$4c</span>,<span class="val">$82</span>,<span class="val">$82</span>,<span class="val">$4c</span>,<span class="val">$81</span>,<span class="val">$8e</span>,<span class="val">$79</span>,<span class="val">$8e</span>,<span class="val">$97</span>,<span class="val">$a7</span>,<span class="val">$97</span>,<span class="val">$a7</span>,<span class="val">$a8</span>,<span class="val">$98</span>,<span class="val">$d1</span>,<span class="val">$d1</span>,<span class="val">$a6</span>,<span class="val">$d0</span>,<span class="val">$d0</span>,<span class="val">$a6</span>,<span class="val">$d0</span>,<span class="val">$d0</span>,<span class="val">$a6</span>,<span class="val">$a7</span>,<span class="val">$96</span>,<span class="val">$a7</span>,<span class="val">$96</span>,<span class="val">$95</span>,<span class="val">$a7</span>,<span class="val">$8d</span>,<span class="val">$82</span>,<span class="val">$8c</span>,<span class="val">0</span>,<span class="val">0</span>,<span class="val">0</span>
+               01CB  <span class="bgrey"> 49 81 74 25</span>
+               01CF  <span class="bgrey"> 75 74 25 75</span>
+               01D3  <span class="bgrey"> 74 24 75 82</span>
+               01D7  <span class="bgrey"> 4C 82 82 4C</span>
+               01DB  <span class="bgrey"> 81 8E 79 8E</span>
+               01DF  <span class="bgrey"> 97 A7 97 A7</span>
+               01E3  <span class="bgrey"> A8 98 D1 D1</span>
+               01E7  <span class="bgrey"> A6 D0 D0 A6</span>
+               01EB  <span class="bgrey"> D0 D0 A6 A7</span>
+               01EF  <span class="bgrey"> 96 A7 96 95</span>
+               01F3  <span class="bgrey"> A7 8D 82 8C</span>
+               01F7  <span class="bgrey"> 00 00 00</span>
+    194        01FA                    <a name="193">LINE_Y2</a>
+    195        01FA  <span class="bgrey"> 80 4A 80 4A</span>          <span class="dirc">FCB</span> <span class="val">$80</span>,<span class="val">$4a</span>,<span class="val">$80</span>,<span class="val">$4a</span>,<span class="val">$25</span>,<span class="val">$74</span>,<span class="val">$24</span>,<span class="val">$25</span>,<span class="val">$75</span>,<span class="val">$24</span>,<span class="val">$25</span>,<span class="val">$75</span>,<span class="val">$24</span>,<span class="val">$4d</span>,<span class="val">$83</span>,<span class="val">$4c</span>,<span class="val">$4c</span>,<span class="val">$82</span>,<span class="val">$4c</span>,<span class="val">$7a</span>,<span class="val">$8f</span>,<span class="val">$79</span>,<span class="val">$a8</span>,<span class="val">$99</span>,<span class="val">$a7</span>,<span class="val">$a7</span>,<span class="val">$97</span>,<span class="val">$98</span>,<span class="val">$d2</span>,<span class="val">$a7</span>,<span class="val">$a6</span>,<span class="val">$d1</span>,<span class="val">$a6</span>,<span class="val">$a6</span>,<span class="val">$d0</span>,<span class="val">$a6</span>,<span class="val">$a6</span>,<span class="val">$a7</span>,<span class="val">$96</span>,<span class="val">$96</span>,<span class="val">$96</span>,<span class="val">$a7</span>,<span class="val">$a7</span>,<span class="val">$8d</span>,<span class="val">$82</span>,<span class="val">$82</span>,<span class="val">$4b</span>,<span class="val">$80</span>,<span class="val">0</span>,<span class="val">0</span>,<span class="val">0</span>
+               01FE  <span class="bgrey"> 25 74 24 25</span>
+               0202  <span class="bgrey"> 75 24 25 75</span>
+               0206  <span class="bgrey"> 24 4D 83 4C</span>
+               020A  <span class="bgrey"> 4C 82 4C 7A</span>
+               020E  <span class="bgrey"> 8F 79 A8 99</span>
+               0212  <span class="bgrey"> A7 A7 97 98</span>
+               0216  <span class="bgrey"> D2 A7 A6 D1</span>
+               021A  <span class="bgrey"> A6 A6 D0 A6</span>
+               021E  <span class="bgrey"> A6 A7 96 96</span>
+               0222  <span class="bgrey"> 96 A7 A7 8D</span>
+               0226  <span class="bgrey"> 82 82 4B 80</span>
+               022A  <span class="bgrey"> 00 00 00</span>
+    196        022D                    <a name="195">LINE_DX</a>
+    197        022D  <span class="bgrey"> 4A 31 0C 23</span>          <span class="dirc">FCB</span> <span class="val">$4a</span>,<span class="val">$31</span>,<span class="val">$c</span>,<span class="val">$23</span>,<span class="val">$0</span>,<span class="val">$0</span>,<span class="val">$23</span>,<span class="val">$2c</span>,<span class="val">$c</span>,<span class="val">$4</span>,<span class="val">$29</span>,<span class="val">$c</span>,<span class="val">$18</span>,<span class="val">$0</span>,<span class="val">$0</span>,<span class="val">$18</span>,<span class="val">$2f</span>,<span class="val">$d</span>,<span class="val">$3b</span>,<span class="val">$0</span>,<span class="val">$0</span>,<span class="val">$3b</span>,<span class="val">$1</span>,<span class="val">$0</span>,<span class="val">$3c</span>,<span class="val">$30</span>,<span class="val">$c</span>,<span class="val">$17</span>,<span class="val">$0</span>,<span class="val">$0</span>,<span class="val">$18</span>,<span class="val">$27</span>,<span class="val">$c</span>,<span class="val">$3</span>,<span class="val">$2c</span>,<span class="val">$c</span>,<span class="val">$23</span>,<span class="val">$0</span>,<span class="val">$0</span>,<span class="val">$22</span>,<span class="val">$b</span>,<span class="val">$2f</span>,<span class="val">$48</span>,<span class="val">$0</span>,<span class="val">$0</span>,<span class="val">$49</span>,<span class="val">$0</span>,<span class="val">$1</span>,<span class="val">0</span>,<span class="val">0</span>,<span class="val">0</span>
+               0231  <span class="bgrey"> 00 00 23 2C</span>
+               0235  <span class="bgrey"> 0C 04 29 0C</span>
+               0239  <span class="bgrey"> 18 00 00 18</span>
+               023D  <span class="bgrey"> 2F 0D 3B 00</span>
+               0241  <span class="bgrey"> 00 3B 01 00</span>
+               0245  <span class="bgrey"> 3C 30 0C 17</span>
+               0249  <span class="bgrey"> 00 00 18 27</span>
+               024D  <span class="bgrey"> 0C 03 2C 0C</span>
+               0251  <span class="bgrey"> 23 00 00 22</span>
+               0255  <span class="bgrey"> 0B 2F 48 00</span>
+               0259  <span class="bgrey"> 00 49 00 01</span>
+               025D  <span class="bgrey"> 00 00 00</span>
+    198        0260                    <a name="197">LINE_DY</a>
+    199        0260  <span class="bgrey"> 36 00 00 36</span>          <span class="dirc">FCB</span> <span class="val">$36</span>,<span class="val">$0</span>,<span class="val">$0</span>,<span class="val">$36</span>,<span class="val">$24</span>,<span class="val">$d</span>,<span class="val">$50</span>,<span class="val">$0</span>,<span class="val">$0</span>,<span class="val">$50</span>,<span class="val">$0</span>,<span class="val">$0</span>,<span class="val">$50</span>,<span class="val">$29</span>,<span class="val">$e</span>,<span class="val">$36</span>,<span class="val">$0</span>,<span class="val">$0</span>,<span class="val">$36</span>,<span class="val">$2e</span>,<span class="val">$e</span>,<span class="val">$15</span>,<span class="val">$2f</span>,<span class="val">$b</span>,<span class="val">$10</span>,<span class="val">$0</span>,<span class="val">$0</span>,<span class="val">$f</span>,<span class="val">$2a</span>,<span class="val">$f</span>,<span class="val">$2b</span>,<span class="val">$0</span>,<span class="val">$0</span>,<span class="val">$2a</span>,<span class="val">$0</span>,<span class="val">$0</span>,<span class="val">$2a</span>,<span class="val">$29</span>,<span class="val">$10</span>,<span class="val">$11</span>,<span class="val">$0</span>,<span class="val">$0</span>,<span class="val">$11</span>,<span class="val">$8</span>,<span class="val">$25</span>,<span class="val">$b</span>,<span class="val">$37</span>,<span class="val">$c</span>,<span class="val">0</span>,<span class="val">0</span>,<span class="val">0</span>
+               0264  <span class="bgrey"> 24 0D 50 00</span>
+               0268  <span class="bgrey"> 00 50 00 00</span>
+               026C  <span class="bgrey"> 50 29 0E 36</span>
+               0270  <span class="bgrey"> 00 00 36 2E</span>
+               0274  <span class="bgrey"> 0E 15 2F 0B</span>
+               0278  <span class="bgrey"> 10 00 00 0F</span>
+               027C  <span class="bgrey"> 2A 0F 2B 00</span>
+               0280  <span class="bgrey"> 00 2A 00 00</span>
+               0284  <span class="bgrey"> 2A 29 10 11</span>
+               0288  <span class="bgrey"> 00 00 11 08</span>
+               028C  <span class="bgrey"> 25 0B 37 0C</span>
+               0290  <span class="bgrey"> 00 00 00</span>
+    200        0293                    <a name="199">LINE_CMD</a>
+    201        0293  <span class="bgrey"> 11 11 11 17</span>          <span class="dirc">FCB</span> <span class="val">$11</span>,<span class="val">$11</span>,<span class="val">$11</span>,<span class="val">$17</span>,<span class="val">$15</span>,<span class="val">$15</span>,<span class="val">$17</span>,<span class="val">$11</span>,<span class="val">$11</span>,<span class="val">$17</span>,<span class="val">$11</span>,<span class="val">$11</span>,<span class="val">$15</span>,<span class="val">$11</span>,<span class="val">$11</span>,<span class="val">$15</span>,<span class="val">$11</span>,<span class="val">$11</span>,<span class="val">$15</span>,<span class="val">$11</span>,<span class="val">$11</span>,<span class="val">$15</span>,<span class="val">$13</span>,<span class="val">$11</span>,<span class="val">$11</span>,<span class="val">$13</span>,<span class="val">$13</span>,<span class="val">$17</span>,<span class="val">$11</span>,<span class="val">$11</span>,<span class="val">$17</span>,<span class="val">$13</span>,<span class="val">$13</span>,<span class="val">$15</span>,<span class="val">$13</span>,<span class="val">$13</span>,<span class="val">$15</span>,<span class="val">$15</span>,<span class="val">$15</span>,<span class="val">$15</span>,<span class="val">$13</span>,<span class="val">$13</span>,<span class="val">$13</span>,<span class="val">$15</span>,<span class="val">$15</span>,<span class="val">$17</span>,<span class="val">$15</span>,<span class="val">$15</span>,<span class="val">0</span>,<span class="val">0</span>,<span class="val">0</span>
+               0297  <span class="bgrey"> 15 15 17 11</span>
+               029B  <span class="bgrey"> 11 17 11 11</span>
+               029F  <span class="bgrey"> 15 11 11 15</span>
+               02A3  <span class="bgrey"> 11 11 15 11</span>
+               02A7  <span class="bgrey"> 11 15 13 11</span>
+               02AB  <span class="bgrey"> 11 13 13 17</span>
+               02AF  <span class="bgrey"> 11 11 17 13</span>
+               02B3  <span class="bgrey"> 13 15 13 13</span>
+               02B7  <span class="bgrey"> 15 15 15 15</span>
+               02BB  <span class="bgrey"> 13 13 13 15</span>
+               02BF  <span class="bgrey"> 15 17 15 15</span>
+               02C3  <span class="bgrey"> 00 00 00</span>
+    202        02C6                    <a name="201">LINE_COLOR</a>
+    203        02C6  <span class="bgrey"> 01 01 01 01</span>          <span class="dirc">FCB</span> <span class="val">$1</span>,<span class="val">$1</span>,<span class="val">$1</span>,<span class="val">$1</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">$6</span>,<span class="val">0</span>,<span class="val">0</span>,<span class="val">0</span>
+               02CA  <span class="bgrey"> 06 06 06 06</span>
+               02CE  <span class="bgrey"> 06 06 06 06</span>
+               02D2  <span class="bgrey"> 06 06 06 06</span>
+               02D6  <span class="bgrey"> 06 06 06 06</span>
+               02DA  <span class="bgrey"> 06 06 06 06</span>
+               02DE  <span class="bgrey"> 06 06 06 06</span>
+               02E2  <span class="bgrey"> 06 06 06 06</span>
+               02E6  <span class="bgrey"> 06 06 06 06</span>
+               02EA  <span class="bgrey"> 06 06 06 06</span>
+               02EE  <span class="bgrey"> 06 06 06 06</span>
+               02F2  <span class="bgrey"> 06 06 06 06</span>
+               02F6  <span class="bgrey"> 00 00 00</span>
+    204
+    205                                <span class="comment">****</span>
+    206                                <span class="comment">*</span> <span class="comment">Couleurs:</span>
+    207                                <span class="comment">*</span> <span class="comment">- 0: blanc</span>
+    208                                <span class="comment">*</span> <span class="comment">- 1: jaune</span>
+    209                                <span class="comment">*</span> <span class="comment">- 2: fuchsia</span>
+    210                                <span class="comment">*</span> <span class="comment">- 3: rouge</span>
+    211                                <span class="comment">*</span> <span class="comment">- 4: turquoise</span>
+    212                                <span class="comment">*</span> <span class="comment">- 5: vert</span>
+    213                                <span class="comment">*</span> <span class="comment">- 6: bleu</span>
+    214                                <span class="comment">*</span> <span class="comment">- 7: noir?</span>
+    215                                <span class="comment">*</span> <span class="comment">- 8: gris</span>
+    216                                <span class="comment">*</span> <span class="comment">- 9: jaune foncé</span>
+    217                                <span class="comment">*</span> <span class="comment">- A: fuchsia fondé</span>
+    218                                <span class="comment">*</span> <span class="comment">- B: rouge foncé</span>
+    219                                <span class="comment">*</span> <span class="comment">- C: turquoise foncé</span>
+    220                                <span class="comment">*</span> <span class="comment">- D: vert foncé</span>
+    221                                <span class="comment">*</span> <span class="comment">- E: bleu foncé</span>
+    222                                <span class="comment">*</span> <span class="comment">- F: noir</span>
+</pre>
+</td>
+</tr>
+</table>
+</body>
+</html>

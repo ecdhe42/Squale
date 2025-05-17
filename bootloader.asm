@@ -1,0 +1,37 @@
+    ORG $C100
+
+PIAROM EQU $F048
+END_ADR EQU $8000
+BASE_ADR EQU $0000
+BITMAP3 EQU $0326
+LINE_COUNTER2 EQU $0319
+COLOR_BG    EQU $E
+
+NB_LINES    EQU $800
+NB_VECTORS  EQU $801
+SCAN_LINE   EQU $802
+COLOR       EQU $803
+CNT         EQU $804
+REG0        EQU $805
+REG1        EQU $806
+TOP_LINE    EQU $807
+LINE_COUNTER EQU $808
+DX          EQU $809
+X_START     EQU $80A
+CMD         EQU $80B
+BITMAP      EQU $1000
+
+STARTLOADER
+    ldu #PIAROM
+    ldx #BASE_ADR
+LOOPCPY 
+    lda ,U
+*    cmpa #$C2               * Relocate any $C2xx pointer to $00xx
+*    bne STRAIGHTCOPY
+*    lda #$00
+*STRAIGHTCOPY
+    sta ,X+
+    cmpx #END_ADR
+    bne LOOPCPY
+
+    jmp >$0000
