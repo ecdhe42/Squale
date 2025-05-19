@@ -216,36 +216,6 @@ WAIT_VIDEO_CHIP_B3                  * WAIT_EF9365_READY();
 
 ********************************************************************************
 
-DISPLAY_TEXT
-WAIT_VIDEO_CHIP_TXT                  * WAIT_EF9365_READY();
-    LDA $F000
-    ANDA #4
-    BEQ WAIT_VIDEO_CHIP_TXT
-
-    LDA #$6
-    STA $F010
-
-    CLR $F008
-    LDA #$40
-    STA $F009
-    CLR $F00A
-    LDA TOP_LINE
-    STA $F00B
-
-    STB $F003
-
-    LDX #LABEL
-TEXT_LOOP
-    LDA ,X+
-    STA $F000
-    BNE TEXT_LOOP
-    RTS
-
-********************************************************************************
-LABEL
-    FCN 'HELLO WORLD'
-    FCB 0
-
 BITMAP
     FCB $4D,$07,$CA,$C6,$CD,$C1,$C3,$CB,$87,$07,$CA,$C6,$CD,$C1,$C3,$CB
 	FCB $87,$07,$CA,$C6,$CD,$C1,$C3,$CB,$87,$07,$CA,$C6,$CD,$C1,$C3,$CB
