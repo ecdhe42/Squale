@@ -8,6 +8,10 @@ Quelques petits programmes pour l'ordinateur Squale de la société Apollo 7, un
 - `temps_pourri.rom`: en hommage à l'origine bretonne du Squale
 - `olipix.rom`: en hommage à un fan des ordinateurs obscures
 
+![Olipix](Olipix_screenshot.png "Title")
+
+![Temps pourri](Temps_pourri_screenshot.png "Title")
+
 Pour lancer sur l'émulateur MAME:
 
 - Lancer le noyau Squale
