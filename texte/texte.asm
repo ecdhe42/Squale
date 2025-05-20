@@ -1,16 +1,6 @@
-LINE_COUNTER2 EQU $0319
 COLOR_BG    EQU $E
-MAZE_NB_LINES   EQU 48
 
-NB_LINES    EQU $800
-NB_VECTORS  EQU $801
-SCAN_LINE   EQU $802
-COLOR       EQU $803
-CNT         EQU $804
-SIZE        EQU $805
-REG1        EQU $806
-TOP_LINE    EQU $807
-LINE_COUNTER EQU $808
+SIZE        EQU $800
 
     ORG $0000
 
@@ -20,6 +10,8 @@ WAIT_VIDEO_CHIP
     BEQ WAIT_VIDEO_CHIP
 
     CLR $F010
+    LDA #$11
+    STA SIZE
 
 WAIT_VIDEO_CHIP2
     LDA $F000
@@ -29,6 +21,13 @@ WAIT_VIDEO_CHIP2
 MAIN_LOOP
     JSR VBLANK
     JSR CLEAR_SCREEN
+    LDA #$90
+    STA $F00B    
+    LDX #LABEL1
+    JSR DISPLAY_TEXT
+    LDA #$10
+    STA $F00B    
+    LDX #LABEL2
     JSR DISPLAY_TEXT
 
 CHECK_KEYBOARD
@@ -111,11 +110,6 @@ WAIT_FOR_VBLANK
 ********************************************************************************
 
 DISPLAY_TEXT
-WAIT_VIDEO_CHIP_TXT                  * WAIT_EF9365_READY();
-*    LDA $F000
-*    ANDA #4
-*    BEQ WAIT_VIDEO_CHIP_TXT
-
     LDA #$6
     STA $F010
 
@@ -123,13 +117,10 @@ WAIT_VIDEO_CHIP_TXT                  * WAIT_EF9365_READY();
     LDA #$10
     STA $F009
     CLR $F00A
-    LDA #$40
-    STA $F00B
 
     LDA SIZE
     STA $F003
 
-    LDX #LABEL
 TEXT_LOOP
     LDA ,X+
     BEQ TEXT_END
@@ -139,8 +130,10 @@ TEXT_END
     RTS
 
 ********************************************************************************
-LABEL
-    FCB $48,$65,$6C,$6C,$6F,$20,$57,$6F,$72,$64,$00
+LABEL1
+    FCB $48,$65,$6C,$6C,$6F,$00
+LABEL2
+    FCB $57,$6F,$72,$64,$00
 
 ****
 * Couleurs:

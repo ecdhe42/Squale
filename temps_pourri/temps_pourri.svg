@@ -1,0 +1,54 @@
+<svg width="256" height="256" xmlns="http://www.w3.org/2000/svg">
+ <g>
+  <title>Layer 1</title>
+  <line stroke="#000" fill="none" x2="40" y2="74" x1="113" y1="128" id="svg_1" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="90" y2="74" x1="40" y1="74" id="svg_2" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="125" y2="128" x1="113" y1="128" id="svg_3" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="90" y2="74" x1="125" y1="128" id="svg_4" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="90" y2="37" x1="90" y1="74" id="svg_5" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="125" y2="117" x1="125" y1="128" id="svg_6" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="90" y2="37" x1="125" y1="117" id="svg_7" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="134" y2="37" x1="90" y1="37" id="svg_8" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="137" y2="117" x1="125" y1="117" id="svg_9" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="133" y2="37" x1="137" y1="117" id="svg_10" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="173" y2="37" x1="133" y1="37" id="svg_11" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="149" y2="117" x1="137" y1="117" id="svg_12" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="173" y2="37" x1="149" y1="117" id="svg_13" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="173" y2="77" x1="173" y1="37" id="svg_14" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="149" y2="130" x1="149" y1="117" id="svg_15" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="173" y2="76" x1="149" y1="130" id="svg_16" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="220" y2="76" x1="173" y1="76" id="svg_17" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="161" y2="130" x1="149" y1="130" id="svg_18" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="220" y2="76" x1="161" y1="130" id="svg_19" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="220" y2="122" x1="220" y1="76" id="svg_20" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="161" y2="140" x1="161" y1="130" id="svg_21" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="220" y2="121" x1="161" y1="140" id="svg_22" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="220" y2="167" x1="220" y1="121" id="svg_23" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="161" y2="151" x1="161" y1="140" id="svg_24" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="220" y2="167" x1="161" y1="151" id="svg_25" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="172" y2="167" x1="220" y1="167" id="svg_26" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="149" y2="151" x1="161" y1="151" id="svg_27" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="173" y2="167" x1="149" y1="151" id="svg_28" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="173" y2="209" x1="173" y1="167" id="svg_29" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="149" y2="166" x1="149" y1="151" id="svg_30" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="173" y2="209" x1="149" y1="166" id="svg_31" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="133" y2="209" x1="173" y1="209" id="svg_32" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="136" y2="166" x1="149" y1="166" id="svg_33" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="133" y2="209" x1="136" y1="166" id="svg_34" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="89" y2="209" x1="133" y1="209" id="svg_35" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="124" y2="166" x1="136" y1="166" id="svg_36" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="89" y2="209" x1="124" y1="166" id="svg_37" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="89" y2="167" x1="89" y1="209" id="svg_38" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="124" y2="150" x1="124" y1="166" id="svg_39" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="89" y2="167" x1="124" y1="150" id="svg_40" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="113" y2="150" x1="124" y1="150" id="svg_41" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="40" y2="167" x1="89" y1="167" id="svg_42" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="40" y2="167" x1="113" y1="150" id="svg_43" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="113" y2="139" x1="113" y1="150" id="svg_44" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="40" y2="130" x1="40" y1="167" id="svg_45" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="40" y2="130" x1="113" y1="139" id="svg_46" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="40" y2="74" x1="40" y1="130" id="svg_47" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+  <line stroke="#000" fill="none" x2="113" y2="128" x1="113" y1="139" id="svg_48" stroke-linejoin="undefined" stroke-linecap="undefined"/>
+</g>
+
+</svg>

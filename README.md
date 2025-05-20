@@ -1,6 +1,6 @@
 # Démos pour ordinateur Squale
 
-Quelques petits programmes pour l'ordinateur Squale de la société Apollo 7, un micro-ordinateur français [sorti en 1985](https://www.acbm.com/virus/num_46/25881_Squale_la_surprenante_histoire_de_l_ordinateur_francais_qui_n_a_soi-disant_jamais_ete_commercialise.html). Elle sont inspirées de [la démonstration MO5.com de Jean-François DEL NERO](https://github.com/jfdelnero/Apollo_7_Squale). Etant donné que je n'ai pas réussi à recompiler cette démo (écrite en C), ces démos sont écrits en assembleur 6809 et assemblés avec le [c6809 d'OlivierP-To8](https://github.com/OlivierP-To8/BootFloppyDisk/tree/main/tools)
+Quelques petits programmes pour l'ordinateur Squale de la société Apollo 7, un micro-ordinateur français [sorti en 1985](https://www.acbm.com/virus/num_46/25881_Squale_la_surprenante_histoire_de_l_ordinateur_francais_qui_n_a_soi-disant_jamais_ete_commercialise.html). Elle sont inspirées de [la démonstration MO5.com de Jean-François DEL NERO](https://github.com/jfdelnero/Apollo_7_Squale). Etant donné que je n'ai pas réussi à recompiler cette démo (écrite en C), ces démos sont écrits en assembleur 6809 et assemblés avec le [c6809 de Pulsdemos](http://www.pulsdemos.com/c6809.html)
 
 ## Démos
 
@@ -15,7 +15,7 @@ Quelques petits programmes pour l'ordinateur Squale de la société Apollo 7, un
 Pour lancer sur l'émulateur MAME:
 
 - Lancer le noyau Squale
-- Appuyez sur Home (ou Del sur macOS) pour activer les raccourcis clavier MAME
+- Appuyez sur Arrêt Défil (ou Del sur macOS) pour activer les raccourcis clavier MAME
 - Appuyez sur Tab pour lancer le menu
 - File Manager / cartridge
 - Sélectionnez le fichier .rom désiré

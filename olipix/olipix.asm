@@ -15,7 +15,11 @@ X_START     EQU $80A
 CMD         EQU $80B
 
     ORG $0000
+    SETDP $F0
 
+    LDA #$F0
+    EXG A,DP
+    
 WAIT_VIDEO_CHIP
     LDA $F000
     ANDA #4
