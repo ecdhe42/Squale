@@ -6,6 +6,7 @@ GPU_X_LSB   EQU $F009
 GPU_Y_MSB   EQU $F00A
 GPU_Y_LSB   EQU $F00B
 GPU_COLOR   EQU $F010
+AY_REG      EQU $F060
 COLOR_BG    EQU $6
 NB_FRAMES   EQU 18
 
@@ -14,7 +15,6 @@ NB_FRAMES   EQU 18
 
     LDA #$F0
     EXG A,DP
-    LDX #BITMAP_OLIPIX1
     LDA #NB_FRAMES
     STA BITMAP_NB
     
@@ -57,6 +57,9 @@ WAIT_VIDEO_CHIP2
     LDA #$90
     STA LINE_COUNTER
 
+    LDB #1
+    STB SOUND_VAL
+    LDX #BITMAP_OLIPIX1
 DEBUT
     JSR DRAW_BITMAP
     DEC BITMAP_NB
@@ -65,12 +68,15 @@ DEBUT
     STA BITMAP_NB
     LDX #BITMAP_OLIPIX1
 DEBUG_CONT
+    JSR SOUND_FALL
+
     DEC TOP_LINE
     DEC LINE_COUNTER
     DEC TOP_LINE
     DEC LINE_COUNTER
     BNE DEBUT
 
+    JSR SOUND_OFF
 END_PRG
     BRA END_PRG
 
@@ -134,8 +140,6 @@ WAIT_VIDEO_CHIP_BG2                  * WAIT_EF9365_READY();
 ********************************************************************************
 
 DRAW_BITMAP
-*    LDX #BITMAP
-
     LDB ,X                      * i = nb_lines
     LDA ,X+                    * nb_lines = *vectorized_sprite++;
     STA NB_LINES
@@ -233,6 +237,86 @@ WAIT_FOR_VBLANK
     bne WAIT_FOR_VBLANK
     rts
 
+SOUND_OFF
+    LDY #SOUND_OFF_DATA
+    LDB #0
+    STB SOUND_VAL
+    JSR SOUND
+    RTS
+
+SOUND_FALL
+    LDY #SOUND_DATA
+    JSR SOUND
+    INC SOUND_VAL
+    INC SOUND_VAL
+    RTS
+
+SOUND
+    PSHS X
+    LDA GPU_CMD
+    LDX #AY_REG
+
+    LDA #00
+    LDB ,Y+
+    LDB SOUND_VAL
+    STD ,X
+
+    LDA #01
+    LDB ,Y+
+    STD ,X
+
+    LDA #02
+    LDB ,Y+
+    STD ,X
+
+    LDA #03
+    LDB ,Y+
+    STD ,X
+
+    LDA #04
+    LDB ,Y+
+    STD ,X
+
+    LDA #05
+    LDB ,Y+
+    STD ,X
+
+    LDA #06
+    LDB ,Y+
+    STD ,X
+
+    LDA #07
+    LDB ,Y+
+    STD ,X
+
+    LDA #08
+    LDB ,Y+
+    STD ,X
+
+    LDA #09
+    LDB ,Y+
+    STD ,X
+
+    LDA #10
+    LDB ,Y+
+    STD ,X
+
+    LDA #11
+    LDB ,Y+
+    STD ,X
+
+    LDA #12
+    LDB ,Y+
+    STD ,X
+    LDA #13
+    LDB ,Y+
+    STD ,X
+
+    STY SOUND_PTR
+
+    PULS X
+    RTS
+
 ********************************************************************************
 
 NB_LINES    FCB $00
@@ -248,6 +332,17 @@ DX          FCB $09
 X_START     FCB $0A
 CMD         FCB $0B
 BITMAP_NB   FCB $0C
+SOUND_PTR   FCB $00,$00
+SOUND_COUNTER   FCB $10
+SOUND_VAL   FCB $01
+
+SOUND_DATA
+    FCB $F8,$04,$00,$00,$00,$00,$00,$F8,$09,$09,$00,$00,$00,$FF
+    FCB $E8,$04,$D0,$08,$77,$07,$07,$F8,$09,$09,$00,$00,$00,$FF
+    FCB $48,$04,$90,$08,$FF,$07,$07,$F8,$0B,$0B,$00,$00,$00,$FF
+    FCB $68,$04,$D0,$08,$77,$07,$07,$F8,$09,$09,$00,$00,$00,$FF
+SOUND_OFF_DATA
+    FCB $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$FF
 
 BITMAP
     FCB $4D,$07,$CA,$C6,$CD,$C1,$C3,$CB,$87,$07,$CA,$C6,$CD,$C1,$C3,$CB
