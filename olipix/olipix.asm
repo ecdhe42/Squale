@@ -1,24 +1,22 @@
-LINE_COUNTER2 EQU $0319
+GPU_CMD     EQU $F000
+GPU_DX      EQU $F005
+GPU_DY      EQU $F007
+GPU_X_MSB   EQU $F008
+GPU_X_LSB   EQU $F009
+GPU_Y_MSB   EQU $F00A
+GPU_Y_LSB   EQU $F00B
+GPU_COLOR   EQU $F010
 COLOR_BG    EQU $6
-
-NB_LINES    EQU $800
-NB_VECTORS  EQU $801
-SCAN_LINE   EQU $802
-COLOR       EQU $803
-CNT         EQU $804
-REG0        EQU $805
-REG1        EQU $806
-TOP_LINE    EQU $807
-LINE_COUNTER EQU $808
-DX          EQU $809
-X_START     EQU $80A
-CMD         EQU $80B
+NB_FRAMES   EQU 18
 
     ORG $0000
     SETDP $F0
 
     LDA #$F0
     EXG A,DP
+    LDX #BITMAP_OLIPIX1
+    LDA #NB_FRAMES
+    STA BITMAP_NB
     
 WAIT_VIDEO_CHIP
     LDA $F000
@@ -61,6 +59,12 @@ WAIT_VIDEO_CHIP2
 
 DEBUT
     JSR DRAW_BITMAP
+    DEC BITMAP_NB
+    BNE DEBUG_CONT
+    LDA #NB_FRAMES
+    STA BITMAP_NB
+    LDX #BITMAP_OLIPIX1
+DEBUG_CONT
     DEC TOP_LINE
     DEC LINE_COUNTER
     DEC TOP_LINE
@@ -130,7 +134,7 @@ WAIT_VIDEO_CHIP_BG2                  * WAIT_EF9365_READY();
 ********************************************************************************
 
 DRAW_BITMAP
-    LDX #BITMAP
+*    LDX #BITMAP
 
     LDB ,X                      * i = nb_lines
     LDA ,X+                    * nb_lines = *vectorized_sprite++;
@@ -218,7 +222,32 @@ WAIT_VIDEO_CHIP_B3                  * WAIT_EF9365_READY();
 
     RTS
 
+VBLANK
+WAIT_FOR_VSYNC
+    lda GPU_CMD
+    anda #$02
+    beq WAIT_FOR_VSYNC
+WAIT_FOR_VBLANK
+    lda GPU_CMD
+    anda #$02
+    bne WAIT_FOR_VBLANK
+    rts
+
 ********************************************************************************
+
+NB_LINES    FCB $00
+NB_VECTORS  FCB $01
+SCAN_LINE   FCB $02
+COLOR       FCB $03
+CNT         FCB $04
+REG0        FCB $05
+REG1        FCB $06
+TOP_LINE    FCB $07
+LINE_COUNTER FCB $08
+DX          FCB $09
+X_START     FCB $0A
+CMD         FCB $0B
+BITMAP_NB   FCB $0C
 
 BITMAP
     FCB $4D,$07,$CA,$C6,$CD,$C1,$C3,$CB,$87,$07,$CA,$C6,$CD,$C1,$C3,$CB
@@ -255,3 +284,5 @@ BITMAP
 	FCB $04,$07,$23,$00,$11,$D7,$F0,$04,$07,$24,$F0,$07,$10,$D0,$04,$07
 	FCB $24,$E0,$07,$12,$C0,$07,$07,$26,$10,$27,$80,$07,$14,$A0,$17,$05
 	FCB $07,$2B,$40,$07,$17,$60,$47,$03,$07,$46,$40,$67
+
+    INCLUD "olipix/olipix_bitmaps.asm"
