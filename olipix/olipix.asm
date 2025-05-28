@@ -11,7 +11,7 @@ AY_REG      EQU $F060
 COLOR_BG    EQU $6
 NB_FRAMES   EQU 18
 NB_NOTES    EQU 64
-NOTE_DURATION EQU 4
+NOTE_DURATION EQU 3
 
     ORG $0000
     SETDP $F0
@@ -34,6 +34,9 @@ WAIT_VIDEO_CHIP2
     BEQ WAIT_VIDEO_CHIP2
 
     JSR CLEAR_SCREEN
+    bra background_end
+    LDA #COLOR_BG
+    STA $F010   * color
     LDB #$20
     JSR DRAW_BACKGROUND_LINE
     LDB #$50
@@ -42,6 +45,8 @@ WAIT_VIDEO_CHIP2
     JSR DRAW_BACKGROUND_LINE
     LDB #$80
     JSR DRAW_BACKGROUND_LINE
+
+    LDB #20
 
     LDA #89
     STA X_START
@@ -54,6 +59,7 @@ WAIT_VIDEO_CHIP2
     LDA #$15
     STA CMD
     JSR DRAW_BACKGROUND_LINE2
+background_end
 
     LDA #$FF
     STA TOP_LINE
@@ -68,23 +74,46 @@ WAIT_VIDEO_CHIP2
     STY SOUND_PTR               ; sound_ptr = &sound_olipix_data
 
     LDX #BITMAP_OLIPIX1
-DEBUT
+fall_loop
+    JSR VBLANK
     JSR DRAW_BITMAP
     DEC BITMAP_NB
-    BNE DEBUG_CONT
+    BNE fall_draw
     LDA #NB_FRAMES
     STA BITMAP_NB
     LDX #BITMAP_OLIPIX1
-DEBUG_CONT
+fall_draw
     JSR SOUND_PLAYLIST
 
     DEC TOP_LINE
     DEC LINE_COUNTER
     DEC TOP_LINE
     DEC LINE_COUNTER
+*    LDA SOUND_COUNTER
+*    CMPA #0
+    LDA LINE_COUNTER
+    CMPA #40
+    BNE fall_loop
+
+background_rising
+    JSR VBLANK
+    JSR move_background
+    JSR DRAW_BITMAP
+    DEC BITMAP_NB
+    BNE background_draw
+    LDA #NB_FRAMES
+    STA BITMAP_NB
+    LDX #BITMAP_OLIPIX1
+background_draw
+    JSR SOUND_PLAYLIST
+
+*    DEC TOP_LINE
+*    DEC LINE_COUNTER
+*    DEC TOP_LINE
+*    DEC LINE_COUNTER
     LDA SOUND_COUNTER
     CMPA #0
-    BNE DEBUT
+    BNE background_rising
 
     LDB #NB_NOTES
     STB SOUND_COUNTER
@@ -97,6 +126,100 @@ continue_music
     JSR SOUND_OFF
 END_PRG
     BRA END_PRG
+
+********************************************************************
+* MOVE BACKGROUND
+********************************************************************
+
+move_background
+    LDA #15
+    STA $F010   * color
+
+    LDB BACKGROUND_LINE0_Y
+    JSR DRAW_BACKGROUND_LINE
+
+    LDB BACKGROUND_LINE1_Y
+    BEQ erase_horizontal_lines_end
+    JSR DRAW_BACKGROUND_LINE
+
+    LDB BACKGROUND_LINE2_Y
+    BEQ erase_horizontal_lines_end
+    JSR DRAW_BACKGROUND_LINE
+
+    LDB BACKGROUND_LINE3_Y
+    BEQ erase_horizontal_lines_end
+    JSR DRAW_BACKGROUND_LINE
+erase_horizontal_lines_end
+
+    LDB BACKGROUND_LINE0_Y
+
+    LDA #89
+    STA X_START
+    LDA #$17
+    STA CMD
+    JSR DRAW_BACKGROUND_LINE2
+
+    LDA #171
+    STA X_START
+    LDA #$15
+    STA CMD
+    JSR DRAW_BACKGROUND_LINE2
+
+redraw_background
+    LDA #COLOR_BG
+    STA $F010   * color
+
+    LDB BACKGROUND_LINE0_Y
+    INCB
+    JSR DRAW_BACKGROUND_LINE
+    STB BACKGROUND_LINE0_Y
+    CMPB #$10
+    BNE move_line1
+    INC BACKGROUND_LINE1_Y
+move_line1
+    LDB BACKGROUND_LINE1_Y
+    CMPB #0
+    BEQ move_line2
+    INCB
+    JSR DRAW_BACKGROUND_LINE
+    STB BACKGROUND_LINE1_Y
+    CMPB #$20
+    BNE move_line2
+    INC BACKGROUND_LINE2_Y
+move_line2
+    LDB BACKGROUND_LINE2_Y
+    CMPB #0
+    BEQ move_line3
+    INCB
+    JSR DRAW_BACKGROUND_LINE
+    STB BACKGROUND_LINE2_Y
+    CMPB #$30
+    BNE move_line3
+    INC BACKGROUND_LINE3_Y
+move_line3
+    LDB BACKGROUND_LINE3_Y
+    CMPB #0
+    BEQ draw_horizontal_lines_end
+    INCB
+    JSR DRAW_BACKGROUND_LINE
+    STB BACKGROUND_LINE3_Y
+draw_horizontal_lines_end
+
+    LDB BACKGROUND_LINE0_Y
+
+    LDA #89
+    STA X_START
+    LDA #$17
+    STA CMD
+    JSR DRAW_BACKGROUND_LINE2
+
+    LDA #171
+    STA X_START
+    LDA #$15
+    STA CMD
+    JSR DRAW_BACKGROUND_LINE2
+
+    RTS
 
 ********************************************************************************
 
@@ -123,13 +246,47 @@ WAIT_VIDEO_CHIP_BG1                  * WAIT_EF9365_READY();
     CLR $F009   * X = 0
     CLR $F00A   * ? = 0
     STB $F00B   * Y = B
-    LDA #$FF
+    LDA #89
     STA $F005   * dX = 255
-    LDA #COLOR_BG
-    STA $F010   * color
     CLR $F007   * dY = 0
     LDA #$11
     STA $F000   * CMD = draw_line
+
+    CLR $F008   * ? = 0
+    LDA #168
+    STA $F009   * X = 0
+    CLR $F00A   * ? = 0
+*    STB $F00B   * Y = B
+    LDA #88
+    STA $F005   * dX = 255
+    CLR $F007   * dY = 0
+    LDA #$11
+    STA $F000   * CMD = draw_line
+
+*    RTS
+*    PSHS B
+    TFR B,A
+    SBCA #75
+    BGE draw_background_line_end
+
+WAIT_VIDEO_CHIP_BG3                  * WAIT_EF9365_READY();
+    LDA $F000
+    ANDA #4
+    BEQ WAIT_VIDEO_CHIP_BG3
+
+    CLR $F008   * ? = 0
+    LDA #89
+    STA $F009   * X = 0
+    CLR $F00A   * ? = 0
+*    STB $F00B   * Y = B
+    LDA #80
+    STA $F005   * dX = 255
+    CLR $F007   * dY = 0
+    LDA #$11
+    STA $F000   * CMD = draw_line
+
+draw_background_line_end
+*    PULS B
     RTS
 
 ********************************************************************************
@@ -147,8 +304,6 @@ WAIT_VIDEO_CHIP_BG2                  * WAIT_EF9365_READY();
     STB $F00B   * Y = B
     LDA #30
     STA $F005   * dX
-    LDA #COLOR_BG
-    STA $F010   * color
     LDA #$80
     STA $F007   * dY
     LDA CMD
@@ -211,13 +366,13 @@ DRAW_VECTOR
     CMPA #$07
     BNE WAIT_VIDEO_CHIP_B3
     LDA SCAN_LINE
-    CMPA #$20
+    CMPA BACKGROUND_LINE0_Y
     BEQ BACKGROUND_COLOR
-    CMPA #$50
+    CMPA BACKGROUND_LINE1_Y
     BEQ BACKGROUND_COLOR
-    CMPA #$70
+    CMPA BACKGROUND_LINE2_Y
     BEQ BACKGROUND_COLOR
-    CMPA #$80
+    CMPA BACKGROUND_LINE3_Y
     BEQ BACKGROUND_COLOR
     BRA WAIT_VIDEO_CHIP_B3
 BACKGROUND_COLOR
@@ -374,6 +529,10 @@ SOUND_PTR   FCB $00,$00
 SOUND_COUNTER   FCB $10
 SOUND_VAL   FCB $01
 SOUND_DURATION FCB $00
+BACKGROUND_LINE0_Y FCB $00
+BACKGROUND_LINE1_Y FCB $00
+BACKGROUND_LINE2_Y FCB $00
+BACKGROUND_LINE3_Y FCB $00
 
 SOUND_DATA
     FCB $F8,$04,$00,$00,$00,$00,$00,$F8,$09,$09,$00,$00,$00,$FF
@@ -381,6 +540,71 @@ SOUND_DATA
     FCB $48,$04,$90,$08,$FF,$07,$07,$F8,$0B,$0B,$00,$00,$00,$FF
     FCB $68,$04,$D0,$08,$77,$07,$07,$F8,$09,$09,$00,$00,$00,$FF
 SOUND_OLIPIX_DATA
+    FCB $F3,$05,$F9,$02,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $01,$05,$80,$02,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $F3,$05,$F9,$02,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $01,$05,$80,$02,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $F9,$03,$FC,$01,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $01,$05,$80,$02,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $F3,$05,$F9,$02,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $01,$05,$80,$02,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $F3,$05,$F9,$02,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $01,$05,$80,$02,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $F3,$05,$F9,$02,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $01,$05,$80,$02,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $F9,$03,$FC,$01,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $01,$05,$80,$02,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $F3,$05,$F9,$02,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $01,$05,$80,$02,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $F2,$07,$F9,$03,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $AE,$06,$57,$03,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $F2,$07,$F9,$03,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $AE,$06,$57,$03,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $4D,$05,$A6,$02,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $AE,$06,$57,$03,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $F2,$07,$F9,$03,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $AE,$06,$57,$03,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $F2,$07,$F9,$03,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $AE,$06,$57,$03,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $F2,$07,$F9,$03,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $AE,$06,$57,$03,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $4D,$05,$A6,$02,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $AE,$06,$57,$03,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $F2,$07,$F9,$03,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $AE,$06,$57,$03,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $AE,$06,$57,$03,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $4D,$05,$A6,$02,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $AE,$06,$57,$03,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $4D,$05,$A6,$02,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $75,$04,$3A,$02,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $4D,$05,$A6,$02,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $AE,$06,$57,$03,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $4D,$05,$A6,$02,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $AE,$06,$57,$03,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $4D,$05,$A6,$02,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $AE,$06,$57,$03,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $4D,$05,$A6,$02,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $75,$04,$3A,$02,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $4D,$05,$A6,$02,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $AE,$06,$57,$03,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $4D,$05,$A6,$02,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $E7,$0B,$F3,$05,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $02,$0A,$01,$05,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $E7,$0B,$F3,$05,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $02,$0A,$01,$05,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $F2,$07,$F9,$03,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $02,$0A,$01,$05,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $E7,$0B,$F3,$05,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $02,$0A,$01,$05,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $E7,$0B,$F3,$05,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $02,$0A,$01,$05,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $E7,$0B,$F3,$05,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $02,$0A,$01,$05,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $F2,$07,$F9,$03,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $02,$0A,$01,$05,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $E7,$0B,$F3,$05,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+    FCB $02,$0A,$01,$05,$00,$00,$00,$F8,$0A,$0A,$00,$00,$A7,$13
+
     FCB $F3,$05,$00,$00,$00,$00,$00,$F8,$09,$09,$00,$00,$00,$FF ; D3
     FCB $01,$05,$00,$00,$00,$00,$00,$F8,$09,$09,$00,$00,$00,$FF ; F3
     FCB $F3,$05,$00,$00,$00,$00,$00,$F8,$09,$09,$00,$00,$00,$FF ; D3
