@@ -80,3 +80,11 @@ WAIT_FOR_VBLANK
 - 13: vert foncé
 - 14: bleu foncé
 - 15: noir
+
+## Sons
+
+Le Squale utilise un General Instrument AY-3-8910A comme processeur sonore - un processeur très courant à l'époque dont diverses variantes ont été utilisées par des machines telles que l'Oric-1, l'Amstrad CPC ou l'Atari ST.
+
+Le Squale n'utilise que deux registres pour programmer le son: $F060 et $F061. La première adresse indique le registre sonore à modifier, la second la valeur à mettre dans ledit registre sonore.
+
+Le détail des registres de l'AY-3-8910 sont [disponible en ligne](https://map.grauw.nl/resources/sound/generalinstrument_ay-3-8910.pdf). Et un bon logiciel pour tester les possibilités du processeur et récuppérer les valeurs des registres associées est le programme [Sound FX Generator](https://forum.defence-force.org/viewtopic.php?t=2280) pour Oric-1.
