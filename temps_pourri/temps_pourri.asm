@@ -1,4 +1,5 @@
 GPU_CMD     EQU $F000
+GPU_CSIZE   EQU $F003
 GPU_DX      EQU $F005
 GPU_DY      EQU $F007
 GPU_X_MSB   EQU $F008
@@ -6,64 +7,118 @@ GPU_X_LSB   EQU $F009
 GPU_Y_MSB   EQU $F00A
 GPU_Y_LSB   EQU $F00B
 GPU_COLOR   EQU $F010
+AY_REG      EQU $F060
 
 MAZE_NB_LINES   EQU 48
 
     org $0000
     setdp $F0
 
-    lda #$F0
-    exg A,DP
+    LDA #$F0
+    EXG A,DP
 
-WAIT_VIDEO_CHIP
-    lda GPU_CMD
-    anda #4
-    beq WAIT_VIDEO_CHIP
+wait_video_chip
+    LDA GPU_CMD
+    ANDA #4
+    BEQ wait_video_chip
 
-    clr GPU_COLOR
+    CLR GPU_COLOR
 
-WAIT_VIDEO_CHIP2
-    lda GPU_CMD
-    anda #4
-    beq WAIT_VIDEO_CHIP2
+wait_video_chip2
+    LDA GPU_CMD
+    ANDA #4
+    BEQ wait_video_chip2
 
 ****************************
 * INIT
 ****************************
-    ldy #0
-    sty PLAYER_POS
-    sty player_missile_pos
-    sty ENEMY_POS
-    ldy #0
+    LDY #0
+    STY player_pos
+    STY enemy_pos
+    LDY #49
+    STA enemy_hit
+    LDY #98
+    STY player_missile_pos
+    LDY #0
+    LDA #0
+    STA space_key_down
+    LDA #$F0
+    STA energy
 
 ****************************
 * MAIN LOOP
 ****************************
 MAIN_LOOP
-    jsr VBLANK
-    jsr CLEAR_SCREEN
+    JSR vblank
+    JSR clear_screen
 
     LDX #MAZE_NB_LINES
-LINE_LOOP
-    leax -1,X
-    jsr DRAW_LINE
-    cmpx #0
-    bne LINE_LOOP
-****************** DRAW ENEMY
-    ldy ENEMY_POS           * Draw enemy
-    jsr DRAW_ENEMY_LINE
-    leay 1,Y
-    jsr DRAW_ENEMY_LINE
-    cmpy #1599                * If enemy ptr is 73
-    beq RESET_ENEMY
-    leay 1,Y
-    sty ENEMY_POS
-    bra DRAW_MISSILES
-RESET_ENEMY
-    ldy #0
-    sty ENEMY_POS
+line_loop
+    LEAX -1,X
+    JSR draw_line
+    CMPX #0
+    BNE line_loop
 
-DRAW_MISSILES
+****************************
+* DISPLAY SCORE
+****************************
+    LDA #$F0
+    STA $F00B
+    LDX #score
+    JSR display_text
+
+************************
+* GAME OVER?
+************************
+    LDA energy
+    CMPA #0
+    BNE game_not_over
+
+    LDA #$80
+    STA $F00B
+    LDX #txt_game_over
+
+    LDA gameover_size
+    LDB counter
+    CMPB #24
+    BEQ game_over_processing_done
+    INCB
+    STB counter
+    ANDB #$7
+    CMPB #0
+    BNE game_over_processing_done
+    LDA gameover_x
+    LSRA
+    STA gameover_x
+    LDA gameover_size
+    ADDA #$11
+    STA gameover_size
+game_over_processing_done
+    STA GPU_CSIZE
+    LDA gameover_x        ; X position
+    STA GPU_X_LSB
+    JSR display_game_over
+    JMP MAIN_LOOP
+game_not_over
+    JSR draw_energy_line
+
+****************** DRAW ENEMY
+    LDY enemy_pos           * Draw enemy
+    JSR draw_enemy_line
+    LEAY 1,Y
+    JSR draw_enemy_line
+    LEAY 1,Y
+    STY enemy_pos
+*    CMPY #1599                * If enemy ptr is 73
+*    BEQ reset_enemy
+*    LEAY 1,Y
+*    STY enemy_pos
+*    BRA draw_missiles
+*reset_enemy
+*    LDY #0
+*    STY enemy_pos
+
+draw_missiles
 ****************** DRAW MISSILES
     LDB #10
     LDX #0
@@ -72,9 +127,9 @@ draw_missile_loop
     CMPA #0
     BEQ next_missile        * If the pointer is null, then next
     LDY missiles_pos,X      * Y = missiles_pos[X]
-    JSR DRAW_MISSILE_LINE   * Draw missile first line
+    JSR draw_missile_line   * Draw missile first line
     LEAY 1,Y                * Y++
-    JSR DRAW_MISSILE_LINE   * Draw missile second line
+    JSR draw_missile_line   * Draw missile second line
 next_missile
     LEAX 2,X                * X += 2
     DECB
@@ -82,12 +137,34 @@ next_missile
 end_missiles
 
 ****************************
-* DISPLAY SCORE
+* MOVE ENEMY
 ****************************
-    LDA #$F0
-    STA $F00B
-    LDX #SCORE
-    JSR DISPLAY_TEXT
+    LDA enemy_hit
+    DECA
+    STA enemy_hit
+    CMPA #0
+    BNE move_enemy_end
+hit_by_enemy
+    LDA #5
+    STA hit
+    LDA energy
+    SBCA #8
+    STA energy
+    CMPA #0
+    BNE reposition_enemy
+    CLR counter
+reposition_enemy
+    JSR rnd
+    LSLA
+    ANDA #$0F
+    TFR A,B
+    LDA #0
+    TFR D,Y
+    LDY enemy_start_pos,Y
+    STY enemy_pos
+    LDA #49
+    STA enemy_hit
+move_enemy_end
 
 ****************************
 * MOVE MISSILES
@@ -101,41 +178,106 @@ move_missile_loop
     DECA
     STA missiles_life,X             ; missiles_life[X]--
     LDY missiles_pos,X
-    LEAY 1,Y
-    STY missiles_pos,X              ; missiles_pos[X]++
+    CMPY enemy_pos
+    BEQ destroy_enemy               ; if missile_pos[X] == enemy_pos, call destroy_enemy
+move_missile
+    LEAY -2,Y
+    STY missiles_pos,X              ; missiles_pos[X]--
+    CMPY enemy_pos
+    BEQ destroy_enemy               ; if missile_pos[X] == enemy_pos, call destroy_enemy
 next_missile_to_move
     LEAX 2,X                        ; X += 2
     DECB
     BNE move_missile_loop
 
-
 ****************************
-
-CHECK_KEYBOARD
-    lda $F046
-    cmpa #$FF
-    bne check_keyboard_keys
-    LDA #0
-    STA space_key_down          ; space_key_down = 0
-    JMP MAIN_LOOP
-check_keyboard_keys
-    ldy PLAYER_POS              ; Y = player_pos
-
-    CMPA #$EF
-    BEQ keyboard_space
+*    ; $F046: keyboard register
+*    ; Bit 6 off: right key down
+*    ; Bit 5 off: left key down
+*    ; Bit 4 off: space key down
+check_keyboard
+    LDA $F046
+    ANDA #$10
+    CMPA #$00
+    LBNE keyboard_space
     LDA #0
     STA space_key_down          ; space_key_down = 0
 next_key
-    lda $F046
-    cmpa #$DF
-    lbeq KEYBOARD_LEFT
-    cmpa #$BF
-    lbeq KEYBOARD_RIGHT
-    jmp MAIN_LOOP
+    LDA (counter)
+    INCA
+    STA (counter)
+    ANDA #$1
+    CMPA #0
+    LBNE MAIN_LOOP
+    LDY player_pos              ; Y = player_pos
+
+    LDA $F046
+    TFR A,B
+    ANDA #$20
+    CMPA #$00
+    LBEQ KEYBOARD_LEFT
+    TFR B,A
+    ANDA #$40
+    CMPA #$00
+    LBEQ KEYBOARD_RIGHT
+    JMP MAIN_LOOP
 
 ****************************
 * END OF MAIN LOOP
 ****************************
+
+****************************
+* DESTROY ENEMY
+****************************
+destroy_enemy
+    PSHS B
+    LDA #0
+    STA missiles_life,X
+    LDY #0
+    JSR rnd
+    LSLA
+    ANDA #$0F
+    TFR A,B
+    LDA #0
+    TFR D,Y
+    LDY enemy_start_pos,Y
+    STY enemy_pos
+    LDA #49
+    STA enemy_hit
+*    LDY sound_boom
+*    JSR play_sound
+    PULS B
+    LDA (score+10)
+    CMPA #$39
+    BEQ score_digit_2
+    INCA
+    STA (score+10)
+    JMP next_missile_to_move
+score_digit_2
+    LDA #$30
+    STA (score+10)
+    LDA (score+9)
+    CMPA #$39
+    BEQ score_digit_3
+    INCA
+    STA (score+9)
+    JMP next_missile_to_move
+score_digit_3
+    LDA #$30
+    STA (score+9)
+    LDA (score+8)
+    CMPA #$39
+    BEQ score_digit_4
+    INCA
+    STA (score+8)
+    JMP next_missile_to_move
+score_digit_4
+    LDA #$30
+    STA (score+8)
+    LDA (score+7)
+    INCA
+    STA (score+7)
+    JMP next_missile_to_move
 
 *********** FIRE
 keyboard_space
@@ -152,199 +294,232 @@ look_for_available_missile_loop
     BNE look_for_next_available_missile     ; if missiles_life[X] != 0, next
     LDY player_missile_pos        ; Y = player_missile_pos
     STY missiles_pos,X               ; missiles_pos[X] = PLAYER_MISSILE_POS
-    LDA #99
+    LDA #49
     STA missiles_life,X             ; missiles_life[X] = 100
+    LDY sound_shoot
+*    JSR play_sound
     BRA keyboard_space_end
 look_for_next_available_missile
     LEAX 2,X
     DECB
     BNE look_for_available_missile_loop
 keyboard_space_end
-    BRA next_key
+    JMP next_key
 
 *********** MOVE RIGHT
 KEYBOARD_RIGHT                      * Y = player position
-    cmpy #45                        * If Y == 45 and going right
-    beq RIGHT_RESET                 * Then reset the player_position
-    lda #6                          * Otherwise paint lines Y, Y+1, Y+2 blue
-    sta LINE_COLOR,Y
-    sta LINE_COLOR+1,Y
-    sta LINE_COLOR+2,Y
-    lda #1                          * And paint lines Y+4, Y+5 yellow (Y+3 stays yellow)
-    sta LINE_COLOR+4,Y
-    sta LINE_COLOR+5,Y
-    cmpy #42                        * If player_position == 42
-    beq KEYBOARD_RIGHT_DRAW_FIRST_VECTOR
-    sta LINE_COLOR+6,Y              * Paint line Y+6 yellow
-    bra MOVE_PLAYER_RIGHT
+    CMPY #45                        * If Y == 45 and going right
+    BEQ RIGHT_RESET                 * Then reset the player_position
+    LDA #6                          * Otherwise paint lines Y, Y+1, Y+2 blue
+    STA line_color,Y
+    STA line_color+1,Y
+    STA line_color+2,Y
+    LDA #1                          * And paint lines Y+4, Y+5 yellow (Y+3 stays yellow)
+    STA line_color+4,Y
+    STA line_color+5,Y
+    CMPY #42                        * If player_position == 42
+    BEQ KEYBOARD_RIGHT_DRAW_FIRST_VECTOR
+    STA line_color+6,Y              * Paint line Y+6 yellow
+    BRA MOVE_PLAYER_RIGHT
 KEYBOARD_RIGHT_DRAW_FIRST_VECTOR
-    sta LINE_COLOR-42,Y             * Paint line 0 yellow
+    STA line_color-42,Y             * Paint line 0 yellow
 MOVE_PLAYER_RIGHT
-    leay 3,Y
-    sty PLAYER_POS
-    ldy player_missile_pos
-    leay 100,Y
-    sty player_missile_pos
-    jmp MAIN_LOOP
+    LEAY 3,Y
+    STY player_pos
+    LDY player_missile_pos
+    LEAY 100,Y
+    STY player_missile_pos
+    JMP MAIN_LOOP
 RIGHT_RESET
-    lda #6
-    sta LINE_COLOR,Y
-    sta LINE_COLOR+1,Y
-    sta LINE_COLOR+2,Y
-    ldy #0
-    sty PLAYER_POS
-    sty player_missile_pos
-    lda #1
-    sta LINE_COLOR+1,Y
-    sta LINE_COLOR+2,Y
-    sta LINE_COLOR+3,Y
-    jmp MAIN_LOOP
+    LDA #6
+    STA line_color,Y
+    STA line_color+1,Y
+    STA line_color+2,Y
+    LDY #98
+    STY player_missile_pos
+    LDY #0
+    STY player_pos
+    LDA #1
+    STA line_color+1,Y
+    STA line_color+2,Y
+    STA line_color+3,Y
+    JMP MAIN_LOOP
 
 *********** MOVE LEFT
 KEYBOARD_LEFT
-    cmpy #0
-    beq LEFT_RESET
-    lda #6
-    sta LINE_COLOR+1,Y
-    sta LINE_COLOR+2,Y
-    cmpy #45
-    beq KEYBOARD_LEFT_ERASE_FIRST_VECTOR
-    sta LINE_COLOR+3,Y
-    bra MOVE_PLAYER_LEFT
+    CMPY #0
+    BEQ LEFT_RESET
+    LDA #6
+    STA line_color+1,Y
+    STA line_color+2,Y
+    CMPY #45
+    BEQ KEYBOARD_LEFT_ERASE_FIRST_VECTOR
+    STA line_color+3,Y
+    BRA MOVE_PLAYER_LEFT
 KEYBOARD_LEFT_ERASE_FIRST_VECTOR
-    sta LINE_COLOR
+    STA line_color
 MOVE_PLAYER_LEFT
-    lda #1
-    sta LINE_COLOR-1,Y
-    sta LINE_COLOR-2,Y
-    sta LINE_COLOR-3,Y
-    leay -3,Y
-    sty PLAYER_POS
-    ldy player_missile_pos
-    leay -100,Y
-    sty player_missile_pos
-    jmp MAIN_LOOP
+    LDA #1
+    STA line_color-1,Y
+    STA line_color-2,Y
+    STA line_color-3,Y
+    LEAY -3,Y
+    STY player_pos
+    LDY player_missile_pos
+    LEAY -100,Y
+    STY player_missile_pos
+    JMP MAIN_LOOP
 LEFT_RESET
-    lda #6
-    sta LINE_COLOR+1,Y
-    sta LINE_COLOR+2,Y
-    sta LINE_COLOR+3,Y
-    ldy #1500
-    sty player_missile_pos
-    ldy #45
-    sty PLAYER_POS
-    lda #1
-    sta LINE_COLOR,Y
-    sta LINE_COLOR+1,Y
-    sta LINE_COLOR+2,Y
-    jmp MAIN_LOOP
+    LDA #6
+    STA line_color+1,Y
+    STA line_color+2,Y
+    STA line_color+3,Y
+    LDY #1598
+    STY player_missile_pos
+    LDY #45
+    STY player_pos
+    LDA #1
+    STA line_color,Y
+    STA line_color+1,Y
+    STA line_color+2,Y
+    JMP MAIN_LOOP
 
 END_PRG
-    bra END_PRG
+    BRA END_PRG
 
 ********************************************************************************
 
-CLEAR_SCREEN
-WAIT_VIDEO_CHIP_CS                  * WAIT_EF9365_READY();
-    lda GPU_CMD
-    anda #4
-    beq WAIT_VIDEO_CHIP_CS
+clear_screen
+wait_video_chip_CS                  * WAIT_EF9365_READY();
+    LDA GPU_CMD
+    ANDA #4
+    BEQ wait_video_chip_CS
 
-    ldb #$4
-    ldx #GPU_CMD
-	stb ,X
-    rts
-
-********************************************************************************
-
-VBLANK
-WAIT_FOR_VSYNC
-    lda GPU_CMD
-    anda #$02
-    beq WAIT_FOR_VSYNC
-WAIT_FOR_VBLANK
-    lda GPU_CMD
-    anda #$02
-    bne WAIT_FOR_VBLANK
-    rts
-
-********************************************************************************
-
-DRAW_LINE
-WAIT_VIDEO_CHIP_DL                  * WAIT_EF9365_READY();
-*    lda GPU_CMD
-*    anda #4
-*    beq WAIT_VIDEO_CHIP_DL
-
-    lda LINE_X1,X
-    sta GPU_X_LSB   * X = X_staRT
-    clr GPU_X_MSB   * ? = 0
-    clr GPU_Y_MSB   * ? = 0
-    lda LINE_Y1,X
-    sta GPU_Y_LSB   * Y = B
-    lda LINE_DX,X
-    sta GPU_DX   * dX
-    lda LINE_COLOR,X
-    sta GPU_COLOR   * color
-    lda LINE_DY,X
-    sta GPU_DY   * dY
-    lda LINE_CMD,X
-    sta GPU_CMD   * CMD = draw_line
-    rts
+    LDA hit
+    CMPA #0
+    BEQ clear_screen_black
+    DECA
+    STA hit
+    LDX #$F010
+    LDB #3
+    STB ,X
+    LDB #$C
+    BRA clear_screen_cmd
+clear_screen_black
+    LDB #$4
+clear_screen_cmd
+    LDX #GPU_CMD
+	STB ,X
+    RTS
 
 ********************************************************************************
 
-DRAW_ENEMY_LINE
+vblank
+wait_for_vsync
+    LDA GPU_CMD
+    ANDA #$02
+    BEQ wait_for_vsync
+wait_for_vblank
+    LDA GPU_CMD
+    ANDA #$02
+    BNE wait_for_vblank
+    RTS
+
+********************************************************************************
+
+draw_line
+wait_video_chip_DL                  * WAIT_EF9365_READY();
+*    LDA GPU_CMD
+*    ANDA #4
+*    BEQ wait_video_chip_DL
+
+    LDA line_x1,X
+    STA GPU_X_LSB   * X = X_staRT
+    CLR GPU_X_MSB   * ? = 0
+    CLR GPU_Y_MSB   * ? = 0
+    LDA line_y1,X
+    STA GPU_Y_LSB   * Y = B
+    LDA line_dx,X
+    STA GPU_DX   * dX
+    LDA line_color,X
+    STA GPU_COLOR   * color
+    LDA line_dy,X
+    STA GPU_DY   * dY
+    LDA line_cmd,X
+    STA GPU_CMD   * CMD = draw_line
+    RTS
+
+********************************************************************************
+
+draw_enemy_line
+*wait_video_chip_DEL                  * WAIT_EF9365_READY();
+*    LDA GPU_CMD
+*    ANDA #4
+*    BEQ wait_video_chip_DEL
+
+    LDA line_enemy_x1,Y
+    STA GPU_X_LSB   * X = X_staRT
+    CLR GPU_X_MSB   * ? = 0
+    CLR GPU_Y_MSB   * ? = 0
+    LDA line_enemy_y1,Y
+    STA GPU_Y_LSB   * Y = B
+    LDA line_enemy_dx,Y
+    STA GPU_DX   * dX
+    LDA #3
+    STA GPU_COLOR   * color
+    LDA line_enemy_dy,Y
+    STA GPU_DY   * dY
+    LDA line_enemy_cmd,Y
+    STA GPU_CMD   * CMD = draw_line
+    RTS
+
+********************************************************************************
+
+draw_missile_line
 *WAIT_VIDEO_CHIP_DEL                  * WAIT_EF9365_READY();
-*    lda GPU_CMD
-*    anda #4
-*    beq WAIT_VIDEO_CHIP_DEL
+*    LDA GPU_CMD
+*    ANDA #4
+*    BEQ WAIT_VIDEO_CHIP_DEL
 
-    lda LINE_ENEMY_X1,Y
-    sta GPU_X_LSB   * X = X_staRT
-    clr GPU_X_MSB   * ? = 0
-    clr GPU_Y_MSB   * ? = 0
-    lda LINE_ENEMY_Y1,Y
-    sta GPU_Y_LSB   * Y = B
-    lda LINE_ENEMY_DX,Y
-    sta GPU_DX   * dX
-    lda #3
-    sta GPU_COLOR   * color
-    lda LINE_ENEMY_DY,Y
-    sta GPU_DY   * dY
-    lda LINE_ENEMY_CMD,Y
-    sta GPU_CMD   * CMD = draw_line
-    rts
-
-********************************************************************************
-
-DRAW_MISSILE_LINE
-*WAIT_VIDEO_CHIP_DEL                  * WAIT_EF9365_READY();
-*    lda GPU_CMD
-*    anda #4
-*    beq WAIT_VIDEO_CHIP_DEL
-
-    lda LINE_MISSILE_X1,Y
-    sta GPU_X_LSB   * X = X_staRT
-    clr GPU_X_MSB   * ? = 0
-    clr GPU_Y_MSB   * ? = 0
-    lda LINE_MISSILE_Y1,Y
-    sta GPU_Y_LSB   * Y = B
-    lda LINE_MISSILE_DX,Y
-    sta GPU_DX   * dX
-    lda #5
-    sta GPU_COLOR   * color
-    lda LINE_MISSILE_DY,Y
-    sta GPU_DY   * dY
-    lda LINE_MISSILE_CMD,Y
-    sta GPU_CMD   * CMD = draw_line
-    rts
+    LDA line_missile_x1,Y
+    STA GPU_X_LSB   * X = X_staRT
+    CLR GPU_X_MSB   * ? = 0
+    CLR GPU_Y_MSB   * ? = 0
+    LDA line_missile_y1,Y
+    STA GPU_Y_LSB   * Y = B
+    LDA line_missile_dx,Y
+    STA GPU_DX   * dX
+    LDA #5
+    STA GPU_COLOR   * color
+    LDA line_missile_dy,Y
+    STA GPU_DY   * dY
+    LDA line_missile_cmd,Y
+    STA GPU_CMD   * CMD = draw_line
+    RTS
 
 ********************************************************************************
 
-DISPLAY_TEXT
+draw_energy_line
+    LDA #0
+    STA GPU_X_LSB   * X = 0
+    CLR GPU_X_MSB   * ? = 0
+    CLR GPU_Y_MSB   * ? = 0
+    LDA #10
+    STA GPU_Y_LSB   * Y = 10
+    LDA energy
+    STA GPU_DX   * dX = energy
+    LDA #2
+    STA GPU_COLOR   * color = 2
+    CLR GPU_DY   * dY = 0
+    LDA #$11
+    STA GPU_CMD   * CMD = draw_line
+    RTS
+
+********************************************************************************
+
+display_text
     LDA #$0
-    STA $F010       ; Color (white)
+    STA GPU_COLOR       ; Color (white)
 
     CLR $F008
     LDA #$60        ; X position
@@ -352,23 +527,143 @@ DISPLAY_TEXT
     CLR $F00A
 
     LDA #$11        ; Text size
-    STA $F003
+    STA GPU_CSIZE
 
-TEXT_LOOP
+text_loop
     LDA ,X+
-    BEQ TEXT_END
+    BEQ text_end
     STA $F000
-    BRA TEXT_LOOP
-TEXT_END
+    BRA text_loop
+text_end
     RTS
 
 ********************************************************************************
 
-SCORE
-    FCC /Score: 0010/
+display_game_over
+    LDA #$0
+    STA GPU_COLOR       ; Color (white)
 
-PLAYER_POS      FDB $0000
-ENEMY_POS       FDB $0000
+    CLR GPU_X_MSB
+    CLR GPU_Y_MSB
+    LDA #$80
+    STA GPU_Y_LSB
+
+text_gameover_loop
+    LDA ,X+
+    BEQ text_gameover_end
+    STA $F000
+    BRA text_gameover_loop
+text_gameover_end
+    RTS
+
+
+rnd
+    INC     rndx
+    LDA     rnda
+    EORA    rndc
+    EORA    rndx
+    STA     rnda
+    ADDA    rndb
+    STA     rndb
+    LSRA
+    ADDA    rndc
+    EORA    rnda
+    STA     rndc
+    RTS
+
+play_sound
+    LDA GPU_CMD
+    LDX #AY_REG
+
+    LDA #00
+    LDB ,Y+
+    STD AY_REG
+
+    LDA #01
+    LDB ,Y+
+    STD AY_REG
+
+    LDA #02
+    LDB ,Y+
+    STD AY_REG
+
+    LDA #03
+    LDB ,Y+
+    STD AY_REG
+
+    LDA #04
+    LDB ,Y+
+    STD AY_REG
+
+    LDA #05
+    LDB ,Y+
+    STD AY_REG
+
+    LDA #06
+    LDB ,Y+
+    STD AY_REG
+
+    LDA #07
+    LDB ,Y+
+    STD AY_REG
+
+    LDA #08
+    LDB ,Y+
+    STD AY_REG
+
+    LDA #09
+    LDB ,Y+
+    STD AY_REG
+
+    LDA #10
+    LDB ,Y+
+    STD AY_REG
+
+    LDA #11
+    LDB ,Y+
+    STD AY_REG
+
+    LDA #12
+    LDB ,Y+
+    STD AY_REG
+
+    LDA #13
+    LDB ,Y+
+    STD AY_REG
+
+    RTS
+
+********************************************************************************
+
+score
+    FCC /Score: 0000/
+
+sound_boom
+    FCB $00,$00,$00,$00,$00,$00,$1F,$07,$10,$10,$10,$E8,$03,$00
+
+sound_shoot
+    FCB $1E,$00,$00,$00,$00,$00,$00,$76,$10,$00,$00,$E8,$03,$09
+
+
+player_pos      FDB $0000
+enemy_pos       FDB $0000
+enemy_hit       FCB $00
+hit             FCB $00
+counter         FCB $00
+rnda            FCB 0
+rndb            FCB 0
+rndc            FCB 0
+rndx            FCB 0
+energy          FCB 0
+gameover        FCB 0
+gameover_size   FCB $11
+gameover_x      FCB $A0
+
+txt_game_over
+    FCC /Game Over/
+
+enemy_start_pos
+    FDB $0000,$0064,$00C8,$012C,$0190,$01F4,$0258,$02BC,$0320,$0384,$03E8,$044C,$04B0,$0514,$0578,$05DC
 missiles_pos
     FDB $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
 missiles_life

@@ -147,7 +147,7 @@ def get_segment_enemy(left, right):
         cmd_e_arr.append('$'+hex(cmd)[2:])
 
 def get_segment_missile(left, right):
-    for i in range(49,-1,-1):
+    for i in range(50):
         x1 = (x1_arr_nb[left] + i*(x2_arr_nb[left] - x1_arr_nb[left]) / 58.0)
         x2 = (x1_arr_nb[right] + (i+8)*(x2_arr_nb[right] - x1_arr_nb[right]) / 58.0)
 
@@ -235,24 +235,24 @@ def print_array(label, a):
         idx_last = min(idx+40, len(a))
         print('    FCB ' + ','.join(a[idx:idx_last]))
 
-print_array('LINE_X1', x1_arr)
-print_array('LINE_Y1', y1_arr)
-print_array('LINE_DX', dx_arr)
-print_array('LINE_DY', dy_arr)
-print_array('LINE_CMD', cmd_arr)
-print_array('LINE_COLOR', color_arr)
+print_array('line_x1', x1_arr)
+print_array('line_y1', y1_arr)
+print_array('line_dx', dx_arr)
+print_array('line_dy', dy_arr)
+print_array('line_cmd', cmd_arr)
+print_array('line_color', color_arr)
 
-print_array('LINE_ENEMY_X1', x1_e_arr)
-print_array('LINE_ENEMY_Y1', y1_e_arr)
-print_array('LINE_ENEMY_DX', dx_e_arr)
-print_array('LINE_ENEMY_DY', dy_e_arr)
-print_array('LINE_ENEMY_CMD', cmd_e_arr)
+print_array('line_enemy_x1', x1_e_arr)
+print_array('line_enemy_y1', y1_e_arr)
+print_array('line_enemy_dx', dx_e_arr)
+print_array('line_enemy_dy', dy_e_arr)
+print_array('line_enemy_cmd', cmd_e_arr)
 
-print_array('LINE_MISSILE_X1', x1_m_arr)
-print_array('LINE_MISSILE_Y1', y1_m_arr)
-print_array('LINE_MISSILE_DX', dx_m_arr)
-print_array('LINE_MISSILE_DY', dy_m_arr)
-print_array('LINE_MISSILE_CMD', cmd_m_arr)
+print_array('line_missile_x1', x1_m_arr)
+print_array('line_missile_y1', y1_m_arr)
+print_array('line_missile_dx', dx_m_arr)
+print_array('line_missile_dy', dy_m_arr)
+print_array('line_missile_cmd', cmd_m_arr)
 
 #print('LINE_X1')
 #print('    FCB ' + ','.join(x1_arr))
@@ -273,3 +273,10 @@ print_array('LINE_MISSILE_CMD', cmd_m_arr)
 
 #print()
 #print(len(elts)-1, "vectors")
+
+pos = []
+
+for i in range(16):
+    pos.append('${:04X}'.format(i*100))
+
+print('    FDB ' + ','.join(pos))
