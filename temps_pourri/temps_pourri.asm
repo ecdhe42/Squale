@@ -8,6 +8,7 @@ GPU_Y_MSB   EQU $F00A
 GPU_Y_LSB   EQU $F00B
 GPU_COLOR   EQU $F010
 AY_REG      EQU $F060
+KEYB_REG    EQU $F046
 
 MAZE_NB_LINES   EQU 48
 
@@ -30,20 +31,104 @@ wait_video_chip2
     BEQ wait_video_chip2
 
 ****************************
-* INIT
+* SPLASH
+****************************
+splash
+    JSR clear_screen
+
+    LDX #txt_splash_temps
+    LDA #$6
+    STA GPU_COLOR       ; Color (blue)
+    LDA #$A0
+    STA GPU_Y_LSB       ; Y = $78
+    LDA #$45
+    STA GPU_X_LSB
+    LDA #$44
+    STA GPU_CSIZE
+    JSR display_custom_text
+
+    LDX #txt_splash_pourri
+    LDA #$6
+    STA GPU_COLOR       ; Color (blue)
+    LDA #$70
+    STA GPU_Y_LSB       ; Y = $78
+    LDA #$40
+    STA GPU_X_LSB
+    LDA #$44
+    STA GPU_CSIZE
+    JSR display_custom_text
+
+    LDX #txt_splash_credit
+    LDA #$1
+    STA GPU_COLOR       ; Color (blue)
+    LDA #$40
+    STA GPU_Y_LSB       ; Y = $78
+    LDA #$28
+    STA GPU_X_LSB
+    LDA #$11
+    STA GPU_CSIZE
+    JSR display_custom_text
+
+splash_loop
+    JSR wait_for_space_key
+
+****************************
+* GAME INIT
 ****************************
     LDY #0
     STY player_pos
-    STY enemy_pos
-    LDY #49
+
+    JSR rnd
+    ANDA #$0F
+    LSLA
+    TFR A,B
+    LDA #0
+    TFR D,Y
+    LDY enemy_start_pos,Y
+    STY enemy_pos               ; Reset enemy position
+
+    LDA #98
     STA enemy_hit
     LDY #98
     STY player_missile_pos
-    LDY #0
-    LDA #0
-    STA space_key_down
+    CLR space_key_down
+    CLR gameover
+    CLR counter
+reset_missiles
+    LDB #10
+    LDX #0
+reset_missiles_loop
+    CLR missiles_life,X
+    LEAX 2,X                * X += 2
+    DECB
+    BNE reset_missiles_loop
+
+reset_playfield_color
+    LDB #44
+    LDX #4
+    LDA #6
+reset_playfield_color_loop
+    STA line_color,X
+    LEAX 1,X
+    DECB
+    BNE reset_playfield_color_loop
+    LDA #1
+    STA line_color
+    STA line_color+1
+    STA line_color+2
+    STA line_color+3
+
     LDA #$F0
     STA energy
+    LDA #$11
+    STA gameover_size
+    LDA #$30
+    STA score+7
+    STA score+8
+    STA score+9
+    STA score+10
+    LDA #$A0
+    STA gameover_x
 
 ****************************
 * MAIN LOOP
@@ -63,7 +148,7 @@ line_loop
 * DISPLAY SCORE
 ****************************
     LDA #$F0
-    STA $F00B
+    STA GPU_Y_LSB
     LDX #score
     JSR display_text
 
@@ -75,7 +160,7 @@ line_loop
     BNE game_not_over
 
     LDA #$80
-    STA $F00B
+    STA GPU_Y_LSB
     LDX #txt_game_over
 
     LDA gameover_size
@@ -98,7 +183,10 @@ game_over_processing_done
     LDA gameover_x        ; X position
     STA GPU_X_LSB
     JSR display_game_over
-    JMP MAIN_LOOP
+    CMPB #24
+    LBNE MAIN_LOOP
+    JSR wait_for_space_key
+    JMP splash
 game_not_over
     JSR draw_energy_line
 
@@ -107,16 +195,14 @@ game_not_over
     JSR draw_enemy_line
     LEAY 1,Y
     JSR draw_enemy_line
+    LDA counter
+    INCA
+    STA counter
+    ANDA #1
+    CMPA #0
+    BEQ draw_missiles
     LEAY 1,Y
     STY enemy_pos
-*    CMPY #1599                * If enemy ptr is 73
-*    BEQ reset_enemy
-*    LEAY 1,Y
-*    STY enemy_pos
-*    BRA draw_missiles
-*reset_enemy
-*    LDY #0
-*    STY enemy_pos
 
 draw_missiles
 ****************** DRAW MISSILES
@@ -148,21 +234,21 @@ hit_by_enemy
     LDA #5
     STA hit
     LDA energy
-    SBCA #8
+    SBCA #$10
     STA energy
     CMPA #0
     BNE reposition_enemy
-    CLR counter
+    CLR counter                 ; If energy == 0, counter = 0
 reposition_enemy
     JSR rnd
-    LSLA
     ANDA #$0F
+    LSLA
     TFR A,B
     LDA #0
     TFR D,Y
     LDY enemy_start_pos,Y
     STY enemy_pos
-    LDA #49
+    LDA #98
     STA enemy_hit
 move_enemy_end
 
@@ -179,7 +265,7 @@ move_missile_loop
     STA missiles_life,X             ; missiles_life[X]--
     LDY missiles_pos,X
     CMPY enemy_pos
-    BEQ destroy_enemy               ; if missile_pos[X] == enemy_pos, call destroy_enemy
+    LBEQ destroy_enemy               ; if missile_pos[X] == enemy_pos, call destroy_enemy
 move_missile
     LEAY -2,Y
     STY missiles_pos,X              ; missiles_pos[X]--
@@ -191,35 +277,63 @@ next_missile_to_move
     BNE move_missile_loop
 
 ****************************
-*    ; $F046: keyboard register
-*    ; Bit 6 off: right key down
-*    ; Bit 5 off: left key down
-*    ; Bit 4 off: space key down
+*    ; Bit 6 off ($40): right key down
+*    ; Bit 5 off ($20): left key down
+*    ; Bit 4 off ($10): space key down
 check_keyboard
-    LDA $F046
+    LDA KEYB_REG
     ANDA #$10
     CMPA #$00
     LBNE keyboard_space
     LDA #0
     STA space_key_down          ; space_key_down = 0
 next_key
-    LDA (counter)
-    INCA
-    STA (counter)
+    LDA counter
     ANDA #$1
     CMPA #0
     LBNE MAIN_LOOP
     LDY player_pos              ; Y = player_pos
 
-    LDA $F046
+check_direction_keyboard
+    LDA KEYB_REG
     TFR A,B
     ANDA #$20
     CMPA #$00
-    LBEQ KEYBOARD_LEFT
+    LBNE single_move_left_done
+    LDA move_key_down
+    CMPA #0
+    BEQ set_first_move_left
+    CMPA #1
+    BEQ set_continuous_move_left
+    DECA
+    STA move_key_down
+    JMP MAIN_LOOP
+set_first_move_left
+    LDA #3
+    STA move_key_down
+set_continuous_move_left
+    JMP KEYBOARD_LEFT
+single_move_left_done
     TFR B,A
     ANDA #$40
     CMPA #$00
-    LBEQ KEYBOARD_RIGHT
+    LBNE single_move_right_done
+    LDA move_key_down
+    CMPA #0
+    BEQ set_first_move_right
+    CMPA #1
+    BEQ set_continuous_move_right
+    DECA
+    STA move_key_down
+    JMP MAIN_LOOP
+set_first_move_right
+    LDA #3
+    STA move_key_down
+set_continuous_move_right
+    JMP KEYBOARD_RIGHT
+single_move_right_done
+    LDA #0
+    STA move_key_down
     JMP MAIN_LOOP
 
 ****************************
@@ -235,14 +349,14 @@ destroy_enemy
     STA missiles_life,X
     LDY #0
     JSR rnd
-    LSLA
     ANDA #$0F
+    LSLA
     TFR A,B
     LDA #0
     TFR D,Y
     LDY enemy_start_pos,Y
     STY enemy_pos
-    LDA #49
+    LDA #98
     STA enemy_hit
 *    LDY sound_boom
 *    JSR play_sound
@@ -542,11 +656,12 @@ text_end
 display_game_over
     LDA #$0
     STA GPU_COLOR       ; Color (white)
+    LDA #$78
+    STA GPU_Y_LSB       ; Y = $78
 
+display_custom_text
     CLR GPU_X_MSB
     CLR GPU_Y_MSB
-    LDA #$80
-    STA GPU_Y_LSB
 
 text_gameover_loop
     LDA ,X+
@@ -556,6 +671,27 @@ text_gameover_loop
 text_gameover_end
     RTS
 
+********************************************************************************
+
+wait_for_space_key
+    LDA KEYB_REG
+    ANDA #$10
+    CMPA #$00
+    BEQ wait_for_space_key      ; Wait for the space key NOT to be pressed
+wait_for_space_key_down
+    JSR rnd
+    LDA KEYB_REG
+    ANDA #$10
+    CMPA #$00
+    BNE wait_for_space_key_down
+wait_for_space_key_up
+    LDA KEYB_REG
+    ANDA #$10
+    CMPA #$00
+    BEQ wait_for_space_key_up
+    RTS
+
+********************************************************************************
 
 rnd
     INC     rndx
@@ -659,8 +795,19 @@ gameover        FCB 0
 gameover_size   FCB $11
 gameover_x      FCB $A0
 
+txt_splash_temps
+    FCC /Temps/
+    FCB 0
+txt_splash_pourri
+    FCC /Pourri/
+    FCB 0
+txt_splash_credit
+    FCC /Copyleft 2025 Laurent Poulain/
+    FCB 0
+
 txt_game_over
     FCC /Game Over/
+    FCB 0
 
 enemy_start_pos
     FDB $0000,$0064,$00C8,$012C,$0190,$01F4,$0258,$02BC,$0320,$0384,$03E8,$044C,$04B0,$0514,$0578,$05DC
@@ -671,6 +818,7 @@ missiles_life
 player_missile_pos
     FDB $0000
 space_key_down  fcb $00
+move_key_down  fcb $00
 next_missile_idx    fcb $00
 
 
