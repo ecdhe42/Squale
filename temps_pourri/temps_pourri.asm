@@ -223,6 +223,34 @@ next_missile
 end_missiles
 
 ****************************
+* SOUNDS
+****************************
+    LDA sound_lvl
+    CMPA #0
+    BEQ shooting_sound
+    DECA
+    STA sound_lvl
+    BRA sound_end
+shooting_sound
+    LDA sound_sht_dur
+    CMPA #0
+    BEQ sound_end
+    DECA
+    STA sound_sht_dur
+    CMPA #0
+    BNE shooting_sound_down
+    LDY #sound_off
+    JSR play_sound
+    BRA sound_end
+shooting_sound_down
+    LDD sound_shoot
+    ADDD #100
+    STD sound_shoot
+    LDY #sound_shoot
+    JSR play_sound
+sound_end
+
+****************************
 * MOVE ENEMY
 ****************************
     LDA enemy_hit
@@ -233,6 +261,11 @@ end_missiles
 hit_by_enemy
     LDA #5
     STA hit
+    LDA #20
+    STA sound_lvl
+    LDY #sound_hit_by_enemy
+    JSR play_sound
+
     LDA energy
     SBCA #$10
     STA energy
@@ -358,8 +391,10 @@ destroy_enemy
     STY enemy_pos
     LDA #98
     STA enemy_hit
-*    LDY sound_boom
-*    JSR play_sound
+    LDA #20
+    STA sound_lvl
+    LDY #sound_enemy_hit
+    JSR play_sound
     PULS B
     LDA (score+10)
     CMPA #$39
@@ -410,8 +445,15 @@ look_for_available_missile_loop
     STY missiles_pos,X               ; missiles_pos[X] = PLAYER_MISSILE_POS
     LDA #49
     STA missiles_life,X             ; missiles_life[X] = 100
-    LDY sound_shoot
-*    JSR play_sound
+    LDA sound_lvl
+    CMPA #0
+    BNE keyboard_space_end
+    LDY #sound_shoot
+    JSR play_sound
+    LDA #$14
+    STA sound_shoot
+    LDA #10
+    STA sound_sht_dur
     BRA keyboard_space_end
 look_for_next_available_missile
     LEAX 2,X
@@ -708,64 +750,63 @@ rnd
     RTS
 
 play_sound
-    LDA GPU_CMD
     LDX #AY_REG
 
     LDA #00
     LDB ,Y+
-    STD AY_REG
+    STD ,X
 
     LDA #01
     LDB ,Y+
-    STD AY_REG
+    STD ,X
 
     LDA #02
     LDB ,Y+
-    STD AY_REG
+    STD ,X
 
     LDA #03
     LDB ,Y+
-    STD AY_REG
+    STD ,X
 
     LDA #04
     LDB ,Y+
-    STD AY_REG
+    STD ,X
 
     LDA #05
     LDB ,Y+
-    STD AY_REG
+    STD ,X
 
     LDA #06
     LDB ,Y+
-    STD AY_REG
+    STD ,X
 
     LDA #07
     LDB ,Y+
-    STD AY_REG
+    STD ,X
 
     LDA #08
     LDB ,Y+
-    STD AY_REG
+    STD ,X
 
     LDA #09
     LDB ,Y+
-    STD AY_REG
+    STD ,X
 
     LDA #10
     LDB ,Y+
-    STD AY_REG
+    STD ,X
 
     LDA #11
     LDB ,Y+
-    STD AY_REG
+    STD ,X
 
     LDA #12
     LDB ,Y+
-    STD AY_REG
+    STD ,X
 
     LDA #13
     LDB ,Y+
-    STD AY_REG
+    STD ,X
 
     RTS
 
@@ -773,13 +814,25 @@ play_sound
 
 score
     FCC /Score: 0000/
+    FCB 0
 
-sound_boom
-    FCB $00,$00,$00,$00,$00,$00,$1F,$07,$10,$10,$10,$E8,$03,$00
+sound_hit_by_enemy
+*    FCB $01,$01,$01,$01,$01,$01,$01,$00,$78,$76,$20,$2C,$04,$00
+    FCB $32,$34,$37,$38,$3A,$2D,$00,$00,$78,$76,$20,$2C,$2E,$00
+*    FCB $F3,$05,$00,$00,$00,$00,$00,$F8,$09,$09,$00,$00,$00,$FF
+*    FCB $00,$00,$00,$00,$00,$00,$1F,$07,$08,$08,$08,$D0,$07,$09
 
 sound_shoot
-    FCB $1E,$00,$00,$00,$00,$00,$00,$76,$10,$00,$00,$E8,$03,$09
+    FCB $14,$00,$00,$00,$00,$00,$00,$7E,$10,$00,$00,$E8,$E3,$00
+    FCB $02,$02,$02,$02,$02,$02,$20,$78,$78,$76,$20,$2C,$05,$00
 
+sound_enemy_hit
+    FCB $02,$02,$07,$02,$0A,$02,$00,$00,$78,$76,$20,$2C,$2E,$00
+*    FCB $F0,$05,$00,$00,$00,$00,$00,$F8,$09,$09,$00,$00,$00,$00
+*    FCB $00,$00,$00,$00,$00,$00,$1F,$47,$08,$08,$08,$D0,$07,$09
+
+sound_off
+    FCB $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$FF
 
 player_pos      FDB $0000
 enemy_pos       FDB $0000
@@ -794,6 +847,8 @@ energy          FCB 0
 gameover        FCB 0
 gameover_size   FCB $11
 gameover_x      FCB $A0
+sound_lvl       FCB 0
+sound_sht_dur   FCB 0
 
 txt_splash_temps
     FCC /Temps/
