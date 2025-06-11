@@ -87,7 +87,7 @@ splash_loop
     LDY enemy_start_pos,Y
     STY enemy_pos               ; Reset enemy position
 
-    LDA #98
+    LDA #49
     STA enemy_hit
     LDY #98
     STY player_missile_pos
@@ -129,6 +129,8 @@ reset_playfield_color_loop
     STA score+10
     LDA #$A0
     STA gameover_x
+    LDA #2
+    STA enemy_pause_move_rate
 
 ****************************
 * MAIN LOOP
@@ -198,11 +200,15 @@ game_not_over
     LDA counter
     INCA
     STA counter
-    ANDA #1
-    CMPA #0
-    BEQ draw_missiles
+    CMPA enemy_pause_move_rate
+    BEQ reset_enemy_counter         ; If counter == reset_enemy_counter
+    DEC enemy_hit                   ; Otherwise, enemy_hit--
     LEAY 1,Y
-    STY enemy_pos
+    STY enemy_pos                   ; And move the enemy
+    BRA draw_enemy_end
+reset_enemy_counter
+    CLR counter                     ; We just reset the counter but don't move the enemy
+draw_enemy_end
 
 draw_missiles
 ****************** DRAW MISSILES
@@ -254,8 +260,6 @@ sound_end
 * MOVE ENEMY
 ****************************
     LDA enemy_hit
-    DECA
-    STA enemy_hit
     CMPA #0
     BNE move_enemy_end
 hit_by_enemy
@@ -281,7 +285,7 @@ reposition_enemy
     TFR D,Y
     LDY enemy_start_pos,Y
     STY enemy_pos
-    LDA #98
+    LDA #49
     STA enemy_hit
 move_enemy_end
 
@@ -389,7 +393,7 @@ destroy_enemy
     TFR D,Y
     LDY enemy_start_pos,Y
     STY enemy_pos
-    LDA #98
+    LDA #49
     STA enemy_hit
     LDA #20
     STA sound_lvl
@@ -403,6 +407,7 @@ destroy_enemy
     STA (score+10)
     JMP next_missile_to_move
 score_digit_2
+    INC enemy_pause_move_rate           ; Every 10 enemies shot, we increase their speed
     LDA #$30
     STA (score+10)
     LDA (score+9)
@@ -837,6 +842,7 @@ sound_off
 player_pos      FDB $0000
 enemy_pos       FDB $0000
 enemy_hit       FCB $00
+enemy_pause_move_rate  FCB $00
 hit             FCB $00
 counter         FCB $00
 rnda            FCB 0
