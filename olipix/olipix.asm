@@ -132,6 +132,12 @@ END_PRG
 ********************************************************************
 
 move_background
+
+*WAIT_VIDEO_CHIP_COL1                  * WAIT_EF9365_READY();
+*    LDA $F000
+*    ANDA #4
+*    BEQ WAIT_VIDEO_CHIP_COL1
+
     LDA #15
     STA $F010   * color
 
@@ -166,6 +172,12 @@ erase_horizontal_lines_end
     JSR DRAW_BACKGROUND_LINE2
 
 redraw_background
+
+WAIT_VIDEO_CHIP_COL2                  * WAIT_EF9365_READY();
+    LDA $F000
+    ANDA #4
+    BEQ WAIT_VIDEO_CHIP_COL2
+
     LDA #COLOR_BG
     STA $F010   * color
 
@@ -251,6 +263,11 @@ WAIT_VIDEO_CHIP_BG1                  * WAIT_EF9365_READY();
     CLR $F007   * dY = 0
     LDA #$11
     STA $F000   * CMD = draw_line
+
+WAIT_VIDEO_CHIP_BG1B
+    LDA $F000
+    ANDA #4
+    BEQ WAIT_VIDEO_CHIP_BG1B
 
     CLR $F008   * ? = 0
     LDA #168
