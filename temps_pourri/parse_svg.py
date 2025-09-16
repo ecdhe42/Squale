@@ -1,6 +1,29 @@
+import math
 import xml.etree.ElementTree as ET
 
-tree = ET.parse('temps_pourri.svg')
+with open('temps_pourri/temps_pourri.dmp', 'rb') as f:
+    d = f.read()
+
+pf = []
+offset = 0
+
+for y in range(256):
+    pf.append([])
+
+for y in range(256):
+    row = pf[255-y]
+    for x in range(0, 256, 8):
+        val = d[offset]
+        offset += 1
+        mask = 0x80
+        for pixel in range(8):
+            if val & mask:
+                row.append(0)
+            else:
+                row.append(1)
+            mask = mask >> 1
+
+tree = ET.parse('temps_pourri/temps_pourri.svg')
 root = tree.getroot()
 
 elts = root[0]
@@ -98,17 +121,80 @@ def get_segment_enemy(left, right):
         y1 = round(y1_arr_nb[left] + i*(y2_arr_nb[left] - y1_arr_nb[left]) / 58.0)
         y2 = round(y1_arr_nb[right] + (i+8)*(y2_arr_nb[right] - y1_arr_nb[right]) / 58.0)
 
+        dx = abs(x2-x1)
+        dy = abs(y2-y1)
+        factor = 1-(i)/100
+
+        if dy < dx:
+            y_shift = dy/dx
+            y_pixel = min(y1,y2)
+            for x_pixel in range(min(x1, x2), max(x1, x2)):
+                if pf[round(y_pixel)][x_pixel] == 0:
+                    x_start = x_pixel
+                    y_start = round(y_pixel)
+                    break
+                y_pixel += y_shift
+
+            y_pixel = max(y1,y2)
+            for x_pixel in range(max(x1, x2), min(x1, x2), -1):
+                if pf[round(y_pixel)][x_pixel] == 0:
+                    x_end = x_pixel
+                    y_end = round(y_pixel)
+                    break
+                y_pixel -= y_shift
+        else:
+            x_shift = dx/dy
+            x_pixel = min(x1,x2)
+            for y_pixel in range(min(y1,y2), max(y1,y2)):
+                if pf[y_pixel][round(x_pixel)] == 0:
+                    y_start = y_pixel
+                    x_start = round(x_pixel)
+                    break
+                x_pixel += x_shift
+
+            x_pixel = max(x1,x2)
+            for y_pixel in range(max(y1,y2), min(y1,y2), -1):
+                if pf[y_pixel][round(x_pixel)] == 0:
+                    y_end = y_pixel
+                    x_end = round(x_pixel)
+                    break
+                x_pixel -= x_shift
+
+#        print(x1,x2,y1,y2,"->", x_start,x_end,y_start,y_end)
+
+        if dy < dx:
+            margin_x = round(factor*dx/dy)
+            margin_y = 1
+        else:
+            margin_x = 1
+            margin_y = round(factor*dy/dx)
+
+#        x1 = x_start
+#        x2 = x_end
+#        y1 = y_start
+#        y2 = y_end
+#        margin_x = 0
+#        margin_y = 0
+
         cmd = 0x11
         if x1 > x2:
             cmd |= 2
+            x1 -= margin_x
+            x2 += margin_x
             dx = x1-x2
         else:
+            x1 += margin_x
+            x2 -= margin_x
             dx = x2-x1
         
         if y1 > y2:
             cmd |= 4
+            y1 -= margin_y
+            y2 += margin_y
             dy = y1-y2
         else:
+            y1 += margin_y
+            y2 -= margin_y
             dy = y2-y1
 
         x1_e_arr.append('$'+hex(x1)[2:])
@@ -125,17 +211,78 @@ def get_segment_enemy(left, right):
         y1 = round(y1_arr_nb[right] + i*(y2_arr_nb[right] - y1_arr_nb[right]) / 58.0)
         y2 = round(y1_arr_nb[left] + (i+8)*(y2_arr_nb[left] - y1_arr_nb[left]) / 58.0)
 
+        dx = abs(x2-x1)
+        dy = abs(y2-y1)
+        if dy < dx:
+            margin_x = round(factor*dx/dy)
+            margin_y = 1
+        else:
+            margin_x = 1
+            margin_y = round(factor*dy/dx)
+
+        if dy < dx:
+            y_shift = dy/dx
+            y_pixel = min(y1,y2)
+            for x_pixel in range(min(x1, x2), max(x1, x2)):
+                if pf[round(y_pixel)][x_pixel] == 0:
+                    x_start = x_pixel
+                    y_start = round(y_pixel)
+                    break
+                y_pixel += y_shift
+
+            y_pixel = max(y1,y2)
+            for x_pixel in range(max(x1, x2), min(x1, x2), -1):
+                if pf[round(y_pixel)][x_pixel] == 0:
+                    x_end = x_pixel
+                    y_end = round(y_pixel)
+                    break
+                y_pixel -= y_shift
+        else:
+            x_shift = dx/dy
+            x_pixel = min(x1,x2)
+            for y_pixel in range(min(y1,y2), max(y1,y2)):
+                if pf[y_pixel][round(x_pixel)] == 0:
+                    y_start = y_pixel
+                    x_start = round(x_pixel)
+                    break
+                x_pixel += x_shift
+
+            x_pixel = max(x1,x2)
+            for y_pixel in range(max(y1,y2), min(y1,y2), -1):
+                if pf[y_pixel][round(x_pixel)] == 0:
+                    y_end = y_pixel
+                    x_end = round(x_pixel)
+                    break
+                x_pixel -= x_shift
+
+#        print(x1,x2,y1,y2,"->", x_start,x_end,y_start,y_end)
+
+#        x1 = x_start
+#        x2 = x_end
+#        y1 = y_start
+#        y2 = y_end
+#        margin_x = 0
+#        margin_y = 0
+
         cmd = 0x11
         if x1 > x2:
             cmd |= 2
+            x1 -= margin_x
+            x2 += margin_x
             dx = x1-x2
         else:
+            x1 += margin_x
+            x2 -= margin_x
             dx = x2-x1
         
         if y1 > y2:
             cmd |= 4
+            y1 -= margin_y
+            y2 += margin_y
             dy = y1-y2
         else:
+            y1 += margin_y
+            y2 -= margin_y
             dy = y2-y1
 
         x1_e_arr.append('$'+hex(x1)[2:])
@@ -159,17 +306,71 @@ def get_segment_missile(left, right):
         x2 = round(x2)
         y2 = round(y2)
 
+        factor = 1-(i)/100
+
+        dx = abs(x2-x1)
+        dy = abs(y2-y1)
+        if dy < dx:
+            y_shift = dy/dx
+            y_pixel = min(y1,y2)
+            for x_pixel in range(min(x1, x2), max(x1, x2)):
+                if pf[round(y_pixel)][x_pixel] == 0:
+                    x_start = x_pixel
+                    y_start = round(y_pixel)
+                    break
+                y_pixel += y_shift
+
+            y_pixel = max(y1,y2)
+            for x_pixel in range(max(x1, x2), min(x1, x2), -1):
+                if pf[round(y_pixel)][x_pixel] == 0:
+                    x_end = x_pixel
+                    y_end = round(y_pixel)
+                    break
+                y_pixel -= y_shift
+        else:
+            x_shift = dx/dy
+            x_pixel = min(x1,x2)
+            for y_pixel in range(min(y1,y2), max(y1,y2)):
+                if pf[round(x_pixel)][y_pixel] == 0:
+                    y_start = y_pixel
+                    x_start = round(x_pixel)
+                    break
+                x_pixel += x_shift
+
+            x_pixel = max(x1,x2)
+            for y_pixel in range(max(y1,y2), min(y1,y2), -1):
+                if pf[round(x_pixel)][y_pixel] == 0:
+                    y_end = y_pixel
+                    x_end = round(x_pixel)
+                    break
+                x_pixel += x_shift
+        
+#        x1 = x_start
+#        x2 = x_end
+#        y1 = y_start
+#        y2 = y_end
+        if dy < dx:
+            margin_x = round(factor*dx/dy)
+            margin_y = 1
+        else:
+            margin_x = 1
+            margin_y = round(factor*dy/dx)
+
         cmd = 0x11
         if x1 > x2:
             cmd |= 2
-            dx = x1-x2
+            x2 += margin_x
+            dx = x1-x2            
         else:
+            x2 -= margin_x
             dx = x2-x1
         
         if y1 > y2:
             cmd |= 4
+            y2 += margin_y
             dy = y1-y2
         else:
+            y2 -= margin_y
             dy = y2-y1
 
         x1_m_arr.append('$'+hex(x1)[2:])
@@ -191,17 +392,70 @@ def get_segment_missile(left, right):
         x2 = round(x2)
         y2 = round(y2)
 
+        dx = abs(x2-x1)
+        dy = abs(y2-y1)
+        if dy < dx:
+            y_shift = dy/dx
+            y_pixel = min(y1,y2)
+            for x_pixel in range(min(x1, x2), max(x1, x2)):
+                if pf[round(y_pixel)][x_pixel] == 0:
+                    x_start = x_pixel
+                    y_start = round(y_pixel)
+                    break
+                y_pixel += y_shift
+
+            y_pixel = max(y1,y2)
+            for x_pixel in range(max(x1, x2), min(x1, x2), -1):
+                if pf[round(y_pixel)][x_pixel] == 0:
+                    x_end = x_pixel
+                    y_end = round(y_pixel)
+                    break
+                y_pixel -= y_shift
+        else:
+            x_shift = dx/dy
+            x_pixel = min(x1,x2)
+            for y_pixel in range(min(y1,y2), max(y1,y2)):
+                if pf[round(x_pixel)][y_pixel] == 0:
+                    y_start = y_pixel
+                    x_start = round(x_pixel)
+                    break
+                x_pixel += x_shift
+
+            x_pixel = max(x1,x2)
+            for y_pixel in range(max(y1,y2), min(y1,y2), -1):
+                if pf[round(x_pixel)][y_pixel] == 0:
+                    y_end = y_pixel
+                    x_end = round(x_pixel)
+                    break
+                x_pixel += x_shift
+
+        if dy < dx:
+            margin_x = round(factor*dx/dy)
+            margin_y = 1
+        else:
+            margin_x = 1
+            margin_y = round(factor*dy/dx)
+
+#        x1 = x_start
+#        x2 = x_end
+#        y1 = y_start
+#        y2 = y_end
+
         cmd = 0x11
         if x1 > x2:
             cmd |= 2
+            x2 += margin_x
             dx = x1-x2
         else:
+            x2 -= margin_x
             dx = x2-x1
         
         if y1 > y2:
             cmd |= 4
+            y2 += margin_y
             dy = y1-y2
         else:
+            y2 -= margin_y
             dy = y2-y1
 
         x1_m_arr.append('$'+hex(x1)[2:])

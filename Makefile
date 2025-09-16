@@ -21,6 +21,9 @@ olipix/olipix.BIN: olipix/olipix.asm
 texte/texte.BIN: texte/texte.asm
 	c6809 texte/texte.asm
 
+temps_pourri/temps_pourri_vectors.asm: temps_pourri/parse_svg.py
+	python temps_pourri/parse_svg.py > temps_pourri/temps_pourri_vectors.asm
+
 temps_pourri/temps_pourri.BIN: temps_pourri/temps_pourri.asm temps_pourri/temps_pourri_vectors.asm
 	c6809 temps_pourri/temps_pourri.asm
 
